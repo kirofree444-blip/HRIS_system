@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/NotificationService.php';
 
 final class PayrollRepository
 {
@@ -122,6 +123,17 @@ final class PayrollRepository
             LEFT JOIN payroll_cutoffs pc ON pc.id=pr.cutoff_id
             WHERE pr.employee_id=? ORDER BY pr.created_at DESC LIMIT 100');
         $st->execute([$employeeId]); return $st->fetchAll();
+    }
+
+    /** One unread bell row for the Manager/ADL a verified payroll ticket now waits for. No email; no row when the step has no account. */
+    private static function notifyApprover(array $req,int $approverUserId,int $step): void
+    {
+        if($approverUserId<1 || !NotificationService::ready()) return;
+        $who=trim((string)($req['first_name']??'').' '.(string)($req['last_name']??''));
+        NotificationService::create(['recipient_user_id'=>$approverUserId,'subject_employee_id'=>(int)($req['employee_id']??0)?:null,'kind'=>'PAYROLL_APPROVAL',
+            'title'=>'Payroll ticket to approve: '.(string)($req['type_name']??'Request').($who!==''?' · '.$who:''),
+            'body'=>(string)($req['request_no']??'').' was verified by HR and is waiting for your approval.',
+            'link'=>url('payroll-request',['id'=>(int)$req['id']]),'dedupe_key'=>'payroll-approval:'.(int)$req['id'].':'.$step]);
     }
 
     public static function payrollRequest(int $id): ?array
@@ -377,13 +389,16 @@ final class PayrollRepository
                 db()->prepare('UPDATE payroll_request_approvals SET status="SKIPPED",remarks="Manager/ADL is the final approver under the biometric payroll workflow." WHERE request_id=? AND step_no>? AND status="PENDING"')->execute([$requestId,$step]);
                 $newStatus='APPROVED';
             } else {
-                $st=db()->prepare('SELECT step_no,approver_type FROM payroll_request_approvals WHERE request_id=? AND step_no>? AND status="PENDING" ORDER BY step_no LIMIT 1'); $st->execute([$requestId,$step]); $next=$st->fetch();
+                $st=db()->prepare('SELECT step_no,approver_type,approver_user_id FROM payroll_request_approvals WHERE request_id=? AND step_no>? AND status="PENDING" ORDER BY step_no LIMIT 1'); $st->execute([$requestId,$step]); $next=$st->fetch();
                 if($type==='HR_TIMEKEEPING' && (!$next || !in_array($next['approver_type'],['MANAGER','ADL'],true))) throw new RuntimeException('This older ticket needs the HR-first routing update before verification. Ask the administrator to import the patch SQL.');
                 if($next) { $nextStep=(int)$next['step_no']; $newStatus=self::statusForApprover($next['approver_type']); } else $newStatus='COMPLETED';
             }
             db()->prepare('UPDATE payroll_requests SET status=?,current_step=?,completed_at=? WHERE id=?')->execute([$newStatus,$nextStep,in_array($newStatus,['APPROVED','COMPLETED'],true)?date('Y-m-d H:i:s'):null,$requestId]);
             $historyNote=$type==='HR_TIMEKEEPING' && $decision==='APPROVE'?'Verified by HR; sent to the assigned Manager/ADL.':stage_label($newApproval).'.';
             self::addPayrollHistory($requestId,$newStatus,$remarks?($historyNote.' '.$remarks):$historyNote,$uid);
+            // Bell + Approvals badge for the assigned Manager/ADL when HR sends the ticket on (John 2026-11-07); cleared once they decide.
+            if($decision==='APPROVE' && $type==='HR_TIMEKEEPING' && !empty($next) && in_array($next['approver_type'],['MANAGER','ADL'],true)) self::notifyApprover($req,(int)$next['approver_user_id'],(int)$next['step_no']);
+            if(in_array($type,['MANAGER','ADL'],true) && NotificationService::ready()) db()->prepare('UPDATE notifications SET read_at=NOW() WHERE recipient_user_id=? AND kind="PAYROLL_APPROVAL" AND dedupe_key=? AND read_at IS NULL')->execute([$uid,'payroll-approval:'.$requestId.':'.$step]);
             // HR review never rebuilds or changes attendance. Final approval does.
             if($auto && in_array($newStatus,['APPROVED','COMPLETED'],true)) PayrollAttendanceService::afterApproval($requestId);
             audit('Payroll & Timekeeping',$type==='HR_TIMEKEEPING' && $decision==='APPROVE'?'HR_VERIFY':'APPROVAL_'.$decision,'payroll_request',$requestId,['step'=>$step,'approver_type'=>$type]); db()->commit();

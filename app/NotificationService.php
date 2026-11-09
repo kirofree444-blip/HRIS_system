@@ -34,6 +34,7 @@ final class NotificationService
             return $access['reminders']?'hr-probation':null;
         if($n['kind']==='CANDIDATE_REVIEW')return !empty($access['review'])?'review-candidates':null; // rec-endorse-manager
         if($n['kind']==='CANDIDATE_DECISION')return !empty($access['recruiting'])?'hr-applicants':null;
+        if($n['kind']==='PAYROLL_APPROVAL')return !empty($access['payroll_approve'])?'manager-approvals':null;// Manager/ADL payroll approvals
         if($n['kind']!=='HR_REQUEST' || empty($n['type_code']))return null;
         $own=(int)$n['requester_user_id']===$userId;
         if($n['type_code']==='INCIDENT_REPORT'){
@@ -62,7 +63,8 @@ final class NotificationService
             'hr'=>$tickets&&TicketRepository::isHr(),'approve'=>$workspace&&TicketRepository::canApprove(),
             'accounting'=>$tickets&&$workspace&&TicketAccounting::canView(),'team'=>$tickets&&$workspace&&Auth::can('ticket.view_team'),
             'reminders'=>in_array($portal,['hr','admin'],true)&&Auth::can('employees.view_all'),
-            'review'=>$workspace&&Auth::can('recruitment.review'),'recruiting'=>$workspace&&Auth::can('recruitment.view')];
+            'review'=>$workspace&&Auth::can('recruitment.review'),'recruiting'=>$workspace&&Auth::can('recruitment.view'),
+            'payroll_approve'=>Auth::can('payroll.approve_manager')||Auth::can('payroll.approve_adl')];
         $sql='SELECT n.kind';$params=[];
         if($tickets){
             [$read,$readArgs]=TicketIncident::readClause($userId,$access['hr']);

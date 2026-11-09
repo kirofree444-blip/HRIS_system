@@ -161,6 +161,7 @@ html[data-theme=dark] .employee-directory-grouped .directory-card-icon,body.dark
 .employee-directory-grouped .directory-leadership-filter .directory-filter-actions{grid-column:1/-1;justify-content:flex-end}
 .directory-assigned-areas{min-width:0;border:1px solid var(--hris-line);border-radius:12px;padding:16px;margin:0}
 .directory-assigned-areas legend{padding:0 6px;font-size:13px;font-weight:600;color:var(--hris-text)}
+.directory-assigned-areas[hidden]{display:none}
 .directory-area-options{display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:12px}
 .directory-area-options label{display:inline-flex;align-items:center;gap:8px;font-size:12px}
 .directory-area-options input[type=checkbox]{width:16px;height:16px;flex-shrink:0}

@@ -130,3 +130,58 @@ Latest actual app patch: tracking-access (SPEC-applicant-tracking-link.md, John 
 Latest patch: screening rating is final once saved (per rater; read-only card; save guard). Files: app/RecruitmentRepository.php, app/CandidateReviewViews.php, tests/screening_rating_{db,http}_test.php. No migration. Checks: check.php task OK; screening db/http tests pass on scratch DB. Localhost code only, not committed, hosting not deployed. Prior: migration 038 tracking link (local). Next: John checks in browser; decide if interview scorecard should also lock.
 
 - 2026-11-05 latest (Claude): Pipeline No site tab (index.php, app.css, View.php css v7). task OK; no browser run; not committed. Next: John reloads Pipeline; optionally set job #8 site to Head Office.
+
+## Current application checkpoint - 7 November 2026 (Claude): HR Dashboard calendar design
+Latest patch: Calendar panel (design only) on HR Dashboard under Overview. Files: app/HrDashboardViews.php (hd_calendar), public/assets/hr-ops.css (.hd-cal*, v=20261107-cal1), tests/hr_dashboard_ui_test.php. No schema/data/permission change. task OK; browser not verified; local only, not committed/deployed. Pending/unapproved: event sources, month navigation, day selection. Next: John reviews design on localhost.
+
+## Current application checkpoint - 7 November 2026 (Claude): dashboard calendar manual events (supersedes the design-only entry above)
+Latest patch: migration 039 calendar_events applied localhost pmbsi_hris (hosting not deployed, not committed). HR Dashboard calendar: add/edit/remove events, month nav ?cal=YYYY-MM; Employee Home read-only, ticked events only. BR-792. Files: app/CalendarEvents.php, app/CalendarViews.php, app/HrDashboardViews.php, app/bootstrap.php, index.php, public/assets/calendar.css, database/migrations/20261107_039_*, tests/calendar_events_{db,http}_test.php, scripts/check.php, CONSTRAINTS.md. Checks: db 19/19, http 13/13 (incl. no PHP warnings), task OK; full has only env (openssl double load) + known employee_profile_http fails. Browser not verified. Open: Q-cal1 (payroll link), Q-cal2 (per-branch visibility). Next: John reviews on localhost.
+
+## Current application checkpoint - 7 November 2026 (Claude): calendar v3 day modal
+Latest patch on top of migration 039: agenda rail removed, full-width grid, clicking a date opens a modal with that day's events and the add form (HR) / read-only list (employees). Files: app/CalendarViews.php, public/assets/calendar.css (v=20261107-cal4), app/HrDashboardViews.php + index.php (css version), tests/calendar_events_http_test.php (14), scripts/check.php, CONSTRAINTS.md. John: localhost only, not for deploy yet. Next: John checks on localhost.
+
+## Current application checkpoint - 7 November 2026 (Claude): calendar v4 fixed payroll schedule
+On top of v3: payroll cutoff no longer typeable; calendar shows fixed cutoffs 4-18 (paid 25th) and 19-3 (paid 10th next month) automatically, read-only, to HR and employees (BR-793). Files: app/CalendarEvents.php, app/CalendarViews.php, tests/calendar_events_{db,http}_test.php, scripts/check.php, CONSTRAINTS.md. No migration. Checks: db 23/23, http 15/15, task OK. Localhost only (John). Open: Q-cal3. Next: John checks on localhost.
+
+## Current application checkpoint - 7 November 2026 (Claude): calendar v5 meeting link + guests
+Migration 040 applied localhost pmbsi_hris (not deployed, not committed). Events: optional meeting link (Join meeting), Who can see = Everyone / Invited guests only / HR only, guest picker (GET calendar-people). BR-794. Files: database/migrations/20261107_040_*, app/CalendarEvents.php, app/CalendarViews.php, index.php, app/HrDashboardViews.php, public/assets/calendar.css (cal5), tests/calendar_events_{db,http}_test.php, scripts/check.php, CONSTRAINTS.md. Checks: db 30/30, http 22/22, task OK, screenshot. Open: Q-cal3, Q-cal4. Next: John checks on localhost.
+
+## Current application checkpoint - 7 November 2026 (Claude): calendar v6 header + no-jump navigation
+On top of v5 (migration 040 local): centred month header, no header Add button, in-place month swap, save returns to #calendar. Files: app/CalendarViews.php, public/assets/calendar.css (cal6), index.php, app/HrDashboardViews.php, tests/calendar_events_http_test.php (23), scripts/check.php, CONSTRAINTS.md. No migration. Localhost only. Open: Q-cal3, Q-cal4.
+
+## Note - 7 November 2026 (Claude): Password access on this laptop
+This working copy (C:/xampp/htdocs/HRIS_system-main) has no config/config.local.php, so security.credential_key is missing and every Password access shows not available (360/370 active accounts have encrypted copies). Restore the original key file; never generate a new key. reveal() message now names the cause. Latest app patch remains calendar v6 (migration 040 local).
+
+Update (same day): the reveal() message change was reverted at John's request; code is back to the original. The missing config.local.php finding still applies.
+
+## Warning - 7 November 2026 (Claude): local DB has a shared test password
+Localhost pmbsi_hris on this laptop: every ACTIVE account (368) uses one test password, and config/config.local.php holds a NEW local credential key. Original passwords are in storage/slice15-private/before_password_reset_20261107.sql (verified). Before any sync to hosting or to the other dev: restore that backup and put back the original config.local.php. Latest app patch remains calendar v6 (migration 040 local).
+
+- 2026-11-07: Copy password fix (clipboard fallback really copies; label only says Copied on success).
+
+## Current application checkpoint - 7 November 2026 (Claude): ADL areas only for ADLs
+Employee 201 Assigned areas for ADL shows only for ADLs (BR-795). Files: app/EmployeeDirectoryPlacement.php, index.php, public/assets/employee-directory.css, app/View.php, tests/adl_areas_visibility_test.php, scripts/check.php, CONSTRAINTS.md. No migration. Local only. Earlier today: calendar v6 (migration 040), copy-password fix, local shared test password (see warning above).
+
+## Current application checkpoint - 7 November 2026 (Claude): Payroll Verify & send
+Payroll Ticket Review panel now sends one ticket to its Manager/ADL in one click (BR-796). Files: app/PayrollTicketViews.php, public/assets/payroll.js, public/assets/payroll.css, app/View.php, tests/payroll_send_one_test.php, scripts/check.php, CONSTRAINTS.md. No migration. Local only. Open: Q-pay1.
+
+## Current application checkpoint - 7 November 2026 (Claude): payroll approver notification
+On top of Verify & send: bell + Team Approvals badge for the assigned Manager/ADL (BR-797). Files: app/PayrollRepository.php, app/NotificationService.php, tests/payroll_send_one_test.php, scripts/check.php, CONSTRAINTS.md. No migration. Local only. Open: email to approvers, TC menu permission (Q-pay1).
+
+## Current application checkpoint - 7 November 2026 (Claude): Attendance Export company filter
+Company Name filter for the attendance download (BR-798). Files: app/PayrollCutoffDocuments.php, app/PayrollModule.php, app/PayrollAttendanceExportViews.php, public/assets/attendance-export.js, app/View.php, tests/attendance_export_company_test.php, scripts/check.php, CONSTRAINTS.md. No migration. Local only. Waiting: John's export template.
+
+## Current application checkpoint - 7 November 2026 (Claude): billing sheets
+One-company Excel = Timekeep Summary, Payroll Summary, Billing Sheet, Sales Seg, Summary Sheet, CI, Billing B (BR-800/801); SSS Table sheet removed, brackets inline. Files: app/PayrollCutoffDocuments.php, config/payroll_summary.php, tests/attendance_export_company_test.php (33), scripts/check.php, CONSTRAINTS.md. Checks: 33/33, review 49/49, task OK, Excel recalc 0 errors. Local only, not deployed. Open: Q-exp2..10 (CI totals equal and bill 100% of earnings; billing sheets on every company). Not tested: Complete-attendance path. Next: John opens a real download; answers Q-exp6/7/10.
+
+## Current application checkpoint - 7 November 2026 (Claude): SSS Table sheet computes
+SSS Table sheet now keeps the sss-table.xlsx formulas (E-H, J-P), so it recomputes and feeds the Payroll Summary SSS lookup (BR-800). Files: app/PayrollCutoffDocuments.php, tests/attendance_export_company_test.php (29), scripts/check.php, CONSTRAINTS.md. Checks: 29/29, task OK, Excel edit test. Local only, not deployed. Open: Q-exp1, Q-exp3..5.
+
+## Current application checkpoint - 7 November 2026 (Claude): Payroll Summary sheet
+One-company Excel = Timekeep Summary + Payroll Summary + SSS Table (BR-800). Files: app/PayrollCutoffDocuments.php, config/payroll_summary.php, tests/attendance_export_company_test.php (28), scripts/check.php, CONSTRAINTS.md. No migration/DB write. Checks: 28/28, review 49/49, task OK, Excel recalc OK. Local only, not committed (no git repo here), not deployed. Open: Q-exp1 (other sheets), Q-exp3 (SSS 2025 table current?), Q-exp4 (Pag-IBIG on zero pay), Q-exp5 (monthly rate to daily). Next: John opens a real download.
+
+## Current application checkpoint - 7 November 2026 (Claude): export template design
+One-company Timekeep Summary now also copies the template look (Tahoma 8, borders, column colours, formats, hidden columns; BR-799). Files: app/PayrollCutoffDocuments.php, tests/attendance_export_company_test.php (18), scripts/check.php, CONSTRAINTS.md. Checks: 18/18, review 49/49, task OK, Excel opened the sample. Local only, not committed/deployed. Next: John opens a real download beside the template; Q-exp1 still open.
+
+## Current application checkpoint - 7 November 2026 (Claude): export template layout
+One-company attendance Excel follows John's Timekeep Summary template; "Ocampos" merges the OC-group companies (BR-799). Files: app/PayrollCutoffDocuments.php, app/PayrollModule.php, app/PayrollAttendanceExportViews.php, tests/attendance_export_company_test.php, scripts/check.php, CONSTRAINTS.md. No migration. Local only. Open: Q-exp1, Q-exp2. Template file kept outside the repo (John's Downloads).

@@ -188,3 +188,22 @@ John: remove the Account setup dropdown on Convert to Employee; generate the acc
 - 2026-11-04 Decision (John): Pipeline is split Head Office / Retail with no All view; each HR has a saved default view (Head Office HR stays on Head Office, Retail HR on the branches picked) and may switch both ways; Retail gets a branch filter; the Other tab was dropped (unassigned notice only); Pipeline only for now, Dashboard/Reports untouched; Applicants links carry the filter; 2 small tables (migration 036) approved; first-time default Head Office.
 - 2026-11-05 Decision (John): approve applicant tracking spec as recommended: two entry paths (private link, Gmail when configured + ref/email Track), 90-day link, APPLIED->Screening, outcomes Not selected/Withdrawn/On hold as status notes, mapping table beats applicant_visible, HR comment leak fixed in the same build.
 - 2026-11-05 Decision (John): every applicant must be on the Pipeline. Reverses "Other tab dropped": a No site tab (job site Other/blank) is shown when any exist; it is a link view, not saved as the HR default.
+
+- 2026-11-07 (John): Dashboard calendar events are manual. Every HR Dashboard user may manage them (no new permission); six fixed types incl. Meeting; start/end date ranges; also shown on Employee dashboard, with a per-event Show on Employee dashboard tick (Claude default: off for Meeting/Other for privacy). BR-792, migration 039.
+
+- 2026-11-07 (John): Payroll cutoff removed from the calendar type list; cutoffs are fixed: 4-18 payable every 25th, 19-3 payable every 10th. Calendar shows them and the pay dates automatically (BR-793). Pay date stays as a manual type for special payouts.
+
+- 2026-11-07 (John): Calendar events can carry a meeting link (Zoom, Meet or any app) and can be limited to invited guests (e.g. an announcement only for the people HR added). Claude: replaced the Show-on-Employee-dashboard tick with Everyone / Invited guests only / HR only; no notification to guests yet. BR-794, migration 040.
+
+- 2026-11-07 (John): Assigned areas for ADL is for ADLs only (option A: every ADL, not limited by company group). Defaults accepted silently: stored areas of non-ADLs kept (not deleted); Directory role ADL counts as ADL. BR-795.
+
+- 2026-11-07 (John): Payroll Ticket Review gets a one-click Verify & send to approver (option A). Cause of the report: Mark reviewed was browser-only, so tickets never reached the Manager/ADL unless HR also used Send for approval. Notifications to approvers (option C) not done.
+
+- 2026-11-07 (John): option C done: bell + Team Approvals badge for the assigned Manager/ADL when HR sends a payroll ticket (BR-797). No email (mail not configured on this laptop).
+
+- 2026-11-07 (John): Attendance Export gets a Company filter by Company Name (not group). Templates per company to follow from John. BR-798.
+
+- 2026-11-07 (John): company export must follow his template (Timekeep Summary layout). Almandite, Artchic, Cryssoberyl, Ocampo's Ventures and Ocampo's are exported together as "Ocampos". BR-799. Not built: Payroll Summary, Billing, Sales Seg, CI, Summary Sheet (need rates, contributions, VAT).
+- 2026-11-07 (John): apply the template's design to the company export too (Timekeep Summary look: font, borders, colours, formats, hidden columns). BR-799.
+- 2026-11-07 (John): build the template's Payroll Summary for company exports. Daily rate from Employee rates, else 755; SSS from his SSS table by cutoff gross pay; PhilHealth 2.5% of cutoff basic; Pag-IBIG 100 per cutoff; Days Present 8 per day; OT hours stay manual. BR-800.
+- 2026-11-07 (John): remove the SSS Table sheet (deduction stays); build Billing Sheet, Sales Seg, Summary Sheet, CI and Billing B from his template. BR-801. Template rates kept in config pending Q-exp6..9.

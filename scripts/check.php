@@ -111,6 +111,11 @@ $suites = [ // script => [minimum PASS count, needs scratch DB]
     'tests/applicant_tracking_test.php' => [32, false],
     'tests/applicant_tracking_db_test.php' => [14, true],
     'tests/applicant_tracking_http_test.php' => [13, true],
+    'tests/calendar_events_db_test.php' => [30, true],
+    'tests/calendar_events_http_test.php' => [23, true],
+    'tests/adl_areas_visibility_test.php' => [14, true],
+    'tests/payroll_send_one_test.php' => [16, true],
+    'tests/attendance_export_company_test.php' => [33, true],
 ];
 $db = getenv('HRIS_TEST_DB') ?: '';
 $dbOk = $db !== '' && $db !== 'pmbsi_hris';

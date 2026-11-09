@@ -81,6 +81,7 @@
 .hr-review-flow-note svg{margin-top:2px}
 .hr-review-full{display:inline-block;margin-top:8px;color:var(--hris-text);text-decoration:underline;text-underline-offset:3px}
 .hr-review-detail-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--hris-line);padding-top:16px;margin-top:17px}
+.hr-review-send{margin:0}
 .hr-review-return{padding-top:15px;margin-top:12px;border-top:1px solid var(--hris-line)}
 .hr-review-return label{font-size:13px}.hr-review-return textarea{width:100%}
 .hr-review-workspace [hidden],.cutoff-friendly-dashboard [hidden]{display:none!important}

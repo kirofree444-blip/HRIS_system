@@ -51,7 +51,7 @@ function payroll_post_action(): void
                 $format=(string)($_POST['format']??'');
                 if(!in_array($format,['xlsx','pdf'],true)) throw new RuntimeException('Choose Excel or PDF.');
                 PayrollCutoffExportService::generate($params['cutoff_id'],($_POST['filing_closed']??'')==='1');
-                redirect('payroll-export',$params+['format'=>$format]);
+                redirect('payroll-export',$params+['format'=>$format]+payroll_company_arg($_POST));
             case 'payroll_v2_calendar_review':
                 $params=['cutoff_id'=>(int)($_POST['cutoff_id']??0)];
                 PayrollCutoffExportService::reviewCalendar($params['cutoff_id'],(array)($_POST['day_ids']??[]),(array)($_POST['source_hashes']??[]),(string)($_POST['classification']??''),(string)($_POST['reason']??''));break;
@@ -121,6 +121,8 @@ function payroll_cutoff_selector(array $cutoffs,int $selected,string $page): voi
 <?php }
 function payroll_amount(mixed $value): string { return $value===null?'Pending computation':'₱'.number_format((float)$value,2); }
 function payroll_hours(mixed $minutes): string { return number_format((float)$minutes/60,2); }
+/** Export company choice ("OC" = Ocampos, or a company id) carried between pages; anything else is dropped. */
+function payroll_company_arg(array $in): array { $v=$in['company_id']??''; return is_string($v)&&preg_match('/^(OC|[1-9]\d{0,9})$/',$v)?['company_id'=>$v]:[]; }
 function payroll_clock(mixed $stamp): string { return $stamp?date('g:i A',strtotime((string)$stamp)):'—'; }
 function payroll_hidden_action(string $action): void { echo csrf_field().'<input type="hidden" name="action" value="'.e('payroll_v2_'.$action).'">'; }
 function payroll_old(string $name,mixed $default=''): string { return e((string)($_SESSION['payroll_form_old'][$name]??$default)); }
@@ -164,8 +166,8 @@ function payroll_render(string $page): void
             if(!in_array($mode,['final','review'],true))throw new RuntimeException('Choose a valid attendance export.');
             if($mode==='review'&&$format==='csv')throw new RuntimeException('Choose Excel or PDF for the current attendance.');
             if($format==='csv') payroll_export($downloadCutoff);
-            PayrollCutoffDocuments::download($downloadCutoff,$format,$mode==='review');
-        } catch(Throwable $error) {flash('error',$error instanceof RuntimeException?$error->getMessage():'The download could not finish. Check server storage and refresh the cutoff.');redirect('payroll-cutoff',['cutoff_id'=>$downloadCutoff]);}
+            PayrollCutoffDocuments::download($downloadCutoff,$format,$mode==='review',(payroll_company_arg($_GET)['company_id']??''));
+        } catch(Throwable $error) {flash('error',$error instanceof RuntimeException?$error->getMessage():'The download could not finish. Check server storage and refresh the cutoff.');redirect('payroll-cutoff',['cutoff_id'=>$downloadCutoff]+payroll_company_arg($_GET));}
     }
     if($page==='payroll-setup') {
         if(PayrollAttendanceService::reviewOnly()) { flash('info','Payroll Setup is deferred. Continue with biometric import and attendance review.'); redirect('payroll-import'); }

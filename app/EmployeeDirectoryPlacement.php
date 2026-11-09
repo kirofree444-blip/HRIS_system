@@ -93,6 +93,19 @@ final class EmployeeDirectoryPlacement
         return $names ? implode(' · ',$names) : 'Not set';
     }
 
+    /** Same rule as isAdlSql() for one employee: Directory role first; Automatic falls back to the position name. */
+    public static function isAdl(string $role, int $positionId): bool
+    {
+        $role=strtoupper(trim($role));
+        if ($role!=='') return $role==='ADL';
+        if ($positionId<1) return false;
+        $q=db()->prepare('SELECT name FROM positions WHERE id=?'); $q->execute([$positionId]);
+        return in_array(strtoupper(trim((string)$q->fetchColumn())),self::ADL_POSITIONS,true);
+    }
+
+    /** Position names that make an employee an ADL when the Directory role is Automatic (for the live form toggle). */
+    public static function adlPositionNames(): array { return self::ADL_POSITIONS; }
+
     public static function save(int $id,array $data,array $old): array
     {
         if (empty($data['directory_fields_present'])) return [];
@@ -106,6 +119,10 @@ final class EmployeeDirectoryPlacement
         $ids=[]; $areas=[];
         foreach(FoundationRepository::areas() as $area) $areas[(int)$area['id']]=$area;
         $previous=self::areaIds($old['directory_area_ids'] ?? null);
+        // Assigned areas are for ADLs only (John 2026-11-07). The box is hidden for everyone else, so a non-ADL save keeps
+        // whatever is stored instead of clearing it (old areas of non-ADLs are left as they are, untouched).
+        $positionId=(int)($data['position_id'] ?? ($old['position_id'] ?? 0));
+        if (!self::isAdl($role, $positionId)) $input=$previous;
         foreach($input as $value) {
             if (!is_scalar($value) || !ctype_digit((string)$value) || (int)$value<1) throw new RuntimeException('Choose a valid assigned area.');
             $areaId=(int)$value;

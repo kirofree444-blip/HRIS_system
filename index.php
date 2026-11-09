@@ -86,6 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success','Application submitted successfully. Your reference number is '.$ref.'.'.($mailed?' We also sent your tracking link to your email.':''));
             redirect('track',$token!==null?['t'=>$token]:['ref'=>$ref]); // never the email in the URL
         }
+        if ($action === 'calendar_save' || $action === 'calendar_delete') {
+            Auth::requirePermission('dashboard.hr.view'); // John 2026-11-07: every HR Dashboard user manages the calendar
+            $uid=(int)Auth::user()['id'];
+            if($action==='calendar_save'){$new=empty($_POST['id']);CalendarEvents::save($_POST,$uid);flash('success',$new?'Calendar event added.':'Calendar event updated.');}
+            else{CalendarEvents::remove((int)($_POST['id']??0),$uid);flash('success','Calendar event removed.');}
+            header('Location: '.url('hr-dashboard',['cal'=>CalendarEvents::month($_POST['cal']??null)->format('Y-m')]).'#calendar'); exit;// land back on the calendar, not the top of the page
+        }
         if ($action === 'move_stage') {
             Auth::requirePermission('recruitment.manage');
             $target=(string)$_POST['target_stage'];
@@ -540,9 +547,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'leave_request_decision' => 'manager-approvals',
             'adjust_leave_credit' => 'hr-leave',
             'update_employee_personal','update_employee_employment','maternity_receive_certificate','maternity_return_to_work','maternity_cancel','upload_employee_photo','save_government_id','delete_government_id','save_emergency_contact','delete_emergency_contact','upload_employee_document','delete_employee_document' => 'hr-employee',
+            'calendar_save','calendar_delete' => 'hr-dashboard',
             default => 'home',
         };
         $back=(string)($_POST['return_page']??$defaultBack); $params=[]; if(!empty($_POST['return_id']))$params['id']=(int)$_POST['return_id']; if(!empty($_POST['return_tab']))$params['tab']=(string)$_POST['return_tab']; if(!empty($_POST['return_job']))$params['job_id']=(int)$_POST['return_job'];
+        if($action==='calendar_save'||$action==='calendar_delete') $params['cal']=CalendarEvents::month($_POST['cal']??null)->format('Y-m');
         if($action==='create_payroll_request' && !empty($_POST['revision_id'])) $params['revision']=(int)$_POST['revision_id'];
         redirect($back,$params);
     }
@@ -722,7 +731,7 @@ if ($page === 'track') {
       <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px"><div class="field" style="margin-bottom:8px"><label for="trkLink">Save your private tracking link</label><textarea id="trkLink" rows="2" readonly aria-describedby="trkLinkHint" style="word-break:break-all;resize:none"><?=e(ApplicantTracking::link($base,$token))?></textarea></div>
       <p id="trkLinkHint" class="tiny muted" style="margin:0 0 10px">Keep this link private. Anyone with it can see this application's status. It works until <?=e(date('M j, Y',strtotime($link['expires_at'])))?>. You can also bookmark this page.</p>
       <button type="button" class="btn sm" id="trkCopy">Copy link</button> <span id="trkCopyMsg" class="tiny" role="status" aria-live="polite"></span></div>
-      <script>document.getElementById('trkCopy').addEventListener('click',async()=>{const f=document.getElementById('trkLink'),m=document.getElementById('trkCopyMsg');try{await navigator.clipboard.writeText(f.value);m.textContent='Link copied.';}catch(e){f.focus();f.select();m.textContent='Could not copy automatically. The link is selected: press Ctrl+C to copy it.';}});</script>
+      <script>document.getElementById('trkCopy').addEventListener('click',async()=>{const f=document.getElementById('trkLink'),m=document.getElementById('trkCopyMsg');try{await navigator.clipboard.writeText(f.value);m.textContent='Link copied.';}catch(e){f.focus();f.select();let ok=false;try{ok=document.execCommand('copy');}catch(x){}m.textContent=ok?'Link copied.':'Could not copy automatically. The link is selected: press Ctrl+C to copy it.';}});</script>
       <?php endif;?></div><?php endif;?>
     <form class="card pad" style="margin-bottom:20px" method="get"><input type="hidden" name="page" value="track"><div class="split"><div class="field"><label for="trkRef">Reference number</label><input id="trkRef" required name="ref" value="<?=e($ref)?>" placeholder="PMBSI-2026-000912"></div><div class="field"><label for="trkEmail">Email used to apply</label><input id="trkEmail" required type="email" name="email" value="<?=e($email)?>"></div></div><button class="btn primary">Check status</button></form>
     <?php if($ref&&$email&&!$result):?><div class="alert error" role="alert">No application matched that reference number and email.</div><?php endif;?></div>
@@ -984,12 +993,15 @@ if ($page === 'employee-dashboard') {
     }
 
     $attendanceHome=$employee && Auth::can('attendance.view_self') && PayrollAttendanceService::ready()?EmployeeAttendanceService::current():null;
+    require_once __DIR__.'/app/CalendarViews.php'; $calMonth=CalendarEvents::month($_GET['cal']??null);
     render_portal_header('employee',$page,'Employee Home');
+    echo '<link rel="stylesheet" href="public/assets/calendar.css?v=20261107-cal6">';
     dashboard_hero('Employee self-service','Good morning, '.explode(' ',trim((string)$u['name']))[0].'.','View your attendance, leave balances, and requests in one place.'); ?>
     <div class="employee-focus">
       <?php if(Auth::can('attendance.view_self')): employee_attendance_home($attendanceHome); else:?><section class="panel today-card"><div class="panel-head"><div><h2>Today</h2><p><?=e(date('l · F j, Y'))?></p></div></div><div class="panel-body"><p>Assigned workplace: <?=e($employee['branch_name']??'Not assigned')?></p></div></section><?php endif;?>
       <section class="panel"><div class="panel-head"><div><h2>Leave balance</h2><p>Available credits</p></div><a class="panel-link" href="<?=url('employee-leave')?>">View details</a></div><div class="panel-body"><?php if(!$employee):?><div class="empty phase3a-dashboard-empty">Link your Employee 201 File to view leave credits.</div><?php elseif(!$displayBalances):?><div class="empty phase3a-dashboard-empty">No leave credits have been assigned yet.</div><?php else:?><div class="balance-grid"><?php foreach($displayBalances as $b):?><div class="balance-card"><strong><?=number_format((float)$b['balance'],2)?></strong><span><?=e($b['name'])?></span><?php if((float)$b['pending']>0):?><small><?=number_format((float)$b['pending'],2)?> pending</small><?php endif;?></div><?php endforeach;?></div><?php endif;?></div></section>
     </div>
+    <?php calendar_panel($calMonth,CalendarEvents::forMonth($calMonth,true,(int)$u['id']),false,'employee-dashboard');?>
     <div class="dashboard-grid equal">
       <section class="panel"><div class="panel-head"><div><h2>Quick actions</h2><p>Common employee requests</p></div></div><div class="panel-body"><div class="quick-actions"><a class="quick-action" href="<?=url('employee-leave')?>"><span class="qa-icon"><?=icon_svg('calendar')?></span><span><strong>Apply for leave</strong><span>View credits and submit leave</span></span></a><a class="quick-action" href="<?=url('employee-request-new')?>"><span class="qa-icon"><?=icon_svg('clock')?></span><span><strong>Payroll & Timekeeping</strong><span>TA, OB, OT and attendance adjustments</span></span></a><a class="quick-action" href="#"><span class="qa-icon"><?=icon_svg('file')?></span><span><strong>Request COE</strong><span>Employment document request</span></span></a><a class="quick-action" href="<?=url('employee-requests')?>"><span class="qa-icon"><?=icon_svg('clipboard')?></span><span><strong>My requests</strong><span>Track submitted requests</span></span></a><?php if(Auth::can('tickets.request_self')):?><a class="quick-action" href="<?=url('hr-requests-my')?>"><span class="qa-icon"><?=icon_svg('clipboard')?></span><span><strong>HR Concerns</strong><span>Payroll concern and other HR requests</span></span></a><?php endif;?></div></div></section>
       <section class="panel"><div class="panel-head"><div><h2>Recent requests</h2><p>Your latest payroll tickets and HR concerns</p></div><a class="panel-link" href="<?=url('employee-requests')?>">View all</a></div><div class="panel-body"><?php if(!$recentRequests):?><div class="empty phase3a-dashboard-empty">No requests submitted yet.</div><?php else:?><div class="timeline-list"><?php foreach($recentRequests as $r):?><div class="timeline-row"><div class="time"><?=e(date('M j',strtotime($r['created_at'])))?></div><span class="timeline-dot"></span><div class="detail"><strong><a href="<?=url($r['_detail_page'],['id'=>$r['id']])?>"><?=e($r['_engine'].' · '.$r['type_name'])?></a></strong><span><?=e($r['request_no'])?></span></div><span class="phase3a-status"><?=e(stage_label($r['status']))?></span></div><?php endforeach;?></div><?php endif;?></div></section>
@@ -1383,6 +1395,11 @@ if (str_starts_with($page,'hr-')) {
     Auth::requirePermission('dashboard.hr.view');
 }
 
+if ($page === 'calendar-people') {// guest picker for calendar events: names + branch of active accounts only (BR-794)
+    need_db(); Auth::requirePermission('dashboard.hr.view');
+    header('Content-Type: application/json; charset=utf-8');header('X-Content-Type-Options: nosniff');
+    echo json_encode(['people'=>TicketIncident::searchPeople((string)($_GET['q']??''))],JSON_THROW_ON_ERROR);exit;
+}
 if ($page === 'hr-dashboard') {
     require_once __DIR__.'/app/HrDashboardViews.php';
     hr_dashboard_page(); exit;
@@ -1610,7 +1627,11 @@ if ($page === 'hr-employee') {
         <input type="hidden" name="directory_fields_present" value="1">
         <div class="field"><label for="directory_role">Directory role</label><select id="directory_role" name="directory_role"><?php foreach([''=>'Automatic (from position)','EMPLOYEE'=>'Employees','DEPARTMENT_MANAGER'=>'Department Managers','ADL'=>'Area Development Leaders (ADL)'] as $code=>$label):?><option value="<?=e($code)?>" <?=($e['directory_role']??'')===$code?'selected':''?>><?=e($label)?></option><?php endforeach;?></select><small>Decides where this person appears in the Employee Directory and Reporting To. Leave on Automatic unless the position is wrong.</small></div>
         <?=DirectorySectionViews::field($e)?>
-        <fieldset class="field full directory-assigned-areas"><legend>Assigned areas for ADL</legend><small>Choose all areas handled by this ADL.</small><div class="directory-area-options"><?php foreach($directoryAreas as $area):$areaId=(int)$area['id'];if(empty($area['active'])&&!in_array($areaId,$assignedDirectoryAreas,true))continue;?><label><input type="checkbox" name="directory_area_ids[]" value="<?=$areaId?>" <?=in_array($areaId,$assignedDirectoryAreas,true)?'checked':''?>><?=e($area['name'])?></label><?php endforeach;?></div></fieldset>
+        <?php $isAdlNow=EmployeeDirectoryPlacement::isAdl((string)($e['directory_role']??''),(int)($e['position_id']??0));// ADL only (John 2026-11-07); hidden+disabled for everyone else ?>
+        <fieldset class="field full directory-assigned-areas" data-adl-areas data-adl-positions="<?=e(json_encode(EmployeeDirectoryPlacement::adlPositionNames()))?>"<?=$isAdlNow?'':' hidden disabled'?>><legend>Assigned areas for ADL</legend><small>Choose all areas handled by this ADL.</small><div class="directory-area-options"><?php foreach($directoryAreas as $area):$areaId=(int)$area['id'];if(empty($area['active'])&&!in_array($areaId,$assignedDirectoryAreas,true))continue;?><label><input type="checkbox" name="directory_area_ids[]" value="<?=$areaId?>" <?=in_array($areaId,$assignedDirectoryAreas,true)?'checked':''?>><?=e($area['name'])?></label><?php endforeach;?></div></fieldset>
+        <script>(function(){var box=document.querySelector('[data-adl-areas]');if(!box)return;var f=box.closest('form'),role=f&&f.querySelector('select[name="directory_role"]'),pos=f&&f.querySelector('select[name="position_id"]'),names=JSON.parse(box.dataset.adlPositions||'[]');if(!role||!pos)return;
+          function sync(){var r=role.value,o=pos.options[pos.selectedIndex],p=o&&o.value?o.text.trim().toUpperCase():'',on=r==='ADL'||(r===''&&names.indexOf(p)>-1);box.hidden=!on;box.disabled=!on}
+          role.addEventListener('change',sync);pos.addEventListener('change',sync);sync();})();</script>
         <?php endif;?>
         <div class="field full reporting-manager-field" id="reporting_manager_field"<?=EmployeeStatusPolicy::code(isset($e['employment_type_id'])?(int)$e['employment_type_id']:null)==='CONSULTANT'?' style="display:none"':''?>>
           <div class="reporting-manager-label"><label for="manager_employee_id">Reporting To / Manager or ADL</label><span class="badge amber">Assigned by HR</span></div>
@@ -2297,7 +2318,12 @@ if ($page === 'admin-users') {
         if(e.key==='Tab'){const f=getFocusable();if(!f.length)return;const first=f[0],last=f[f.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
       });
 
-      const credentialCopyBtn=qs('#copyCredentialPassword'); credentialCopyBtn?.addEventListener('click',async()=>{if(!credentialValue?.value)return;const label=credentialCopyBtn.querySelector('span');try{await navigator.clipboard.writeText(credentialValue.value);if(label)label.textContent='Copied';setTimeout(()=>{if(label)label.textContent='Copy password';},1500);}catch(e){credentialValue.type='text';credentialValue.select();}});
+      const credentialCopyBtn=qs('#copyCredentialPassword'); credentialCopyBtn?.addEventListener('click',async()=>{if(!credentialValue?.value)return;const label=credentialCopyBtn.querySelector('span'),text=credentialValue.value;let ok=false;
+        // Copy the password itself. The old fallback only selected the field, so the clipboard kept whatever was copied before (often the email).
+        try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);ok=true;}}catch(e){}
+        if(!ok){const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';(passwordAccessModal||document.body).appendChild(ta);ta.focus();ta.select();try{ok=document.execCommand('copy');}catch(e){}ta.remove();credentialCopyBtn.focus();}
+        if(ok){if(label)label.textContent='Copied';setTimeout(()=>{if(label)label.textContent='Copy password';},1500);}
+        else{credentialValue.type='text';credentialValue.focus();credentialValue.select();if(label)label.textContent='Press Ctrl+C';setTimeout(()=>{if(label)label.textContent='Copy password';},4000);}});
       applyFilters();
     })();
     </script>

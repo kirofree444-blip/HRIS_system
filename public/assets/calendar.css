@@ -1,0 +1,85 @@
+/* Dashboard calendar (2026-11-07, migration 039). Tokens only, light and dark. Shared by HR and Employee dashboards. */
+.hd-cal{margin-top:16px}
+.hd-cal .panel-head{gap:12px}
+.hd-cal-grid{width:100%;border-collapse:separate;border-spacing:4px;table-layout:fixed}
+.hd-cal-grid th{font-size:11px;font-weight:700;color:var(--hris-muted);text-transform:uppercase;letter-spacing:.04em;padding:0 0 6px;text-align:left}
+.hd-cal-grid td{height:104px;vertical-align:top;padding:0;border:1px solid var(--hris-line);border-radius:10px;background:var(--hris-surface);overflow:hidden}
+.hd-cal-grid td.is-weekend{background:var(--hris-surface-2)}
+.hd-cal-grid td.is-out{background:transparent;border-style:dashed}
+.hd-cal-grid td.is-out .d{color:var(--hris-muted);opacity:.6}
+.hd-cal-grid .d{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:999px;font-size:12px;font-weight:650;color:var(--hris-text);font-variant-numeric:tabular-nums}
+.hd-cal-grid td.is-today{border-color:var(--hris-brand);background:var(--hris-brand-soft)}
+.hd-cal-grid td.is-today .d{box-shadow:inset 0 0 0 2px var(--hris-brand);font-weight:800}
+/* Type colour is a left rail; the title text always carries the meaning. */
+.t-payroll_cutoff{--cal-tone:var(--hris-brand)}.t-pay_date{--cal-tone:var(--hris-success)}.t-holiday{--cal-tone:var(--hris-danger)}
+.t-company_event{--cal-tone:var(--hris-info)}.t-meeting{--cal-tone:var(--hris-muted)}.t-other{--cal-tone:var(--hris-line)}
+.cal-ev{display:block;margin-top:3px;padding:1px 6px;border-radius:6px;border-left:3px solid var(--cal-tone);background:var(--hris-surface-2);font-size:10.5px;font-weight:600;color:var(--hris-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-more{display:block;margin-top:2px;font-size:10px;color:var(--hris-muted)}
+.cal-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:460px;overflow-y:auto}
+.cal-item{padding:10px 12px;border:1px solid var(--hris-line);border-left:4px solid var(--cal-tone);border-radius:10px;background:var(--hris-surface);font-size:12px;color:var(--hris-text)}
+.cal-item strong{display:block;margin-top:4px;font-size:12.5px;overflow-wrap:anywhere}
+.cal-item p{margin:4px 0 0;color:var(--hris-muted);font-size:11.5px;overflow-wrap:anywhere}
+.cal-item-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 8px}
+.cal-type{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--hris-muted)}
+.cal-when{font-size:11px;color:var(--hris-text);font-variant-numeric:tabular-nums}
+.cal-vis{display:block;margin-top:6px;font-size:10.5px;color:var(--hris-muted)}
+.cal-actions{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;margin-top:8px}
+.cal-actions details{flex:1 1 100%}.cal-actions details:not([open]){flex:0 0 auto}
+.cal-add summary,.cal-actions summary{list-style:none;cursor:pointer;display:inline-flex;min-height:36px;align-items:center}
+.cal-add summary::-webkit-details-marker,.cal-actions summary::-webkit-details-marker{display:none}
+.cal-form{display:grid;gap:10px;margin-top:10px;padding:12px;border:1px solid var(--hris-line);border-radius:10px;background:var(--hris-surface)}
+.cal-form .field{margin:0;min-width:0}.cal-form .field input,.cal-form .field select,.cal-form .field textarea{width:100%;min-height:40px}
+.cal-form .field small{display:block;margin-top:3px;font-size:10.5px;color:var(--hris-muted)}
+.cal-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cal-opt{font-weight:400}
+.cal-check{display:flex;align-items:center;gap:8px;min-height:36px;font-size:12px;color:var(--hris-text);cursor:pointer}
+.cal-check input{width:18px;height:18px}
+.cal-legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.cal-legend li{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;background:var(--hris-surface);border:1px solid var(--hris-line);font-size:11px;color:var(--hris-text)}
+.cal-legend i{width:8px;height:8px;border-radius:999px;background:var(--cal-tone)}
+.hd-cal :where(a,summary,button,input,select,textarea):focus-visible{outline:2px solid var(--hris-info);outline-offset:2px}
+@media(max-width:620px){.hd-cal .panel-head{flex-wrap:wrap}.hd-cal-grid{border-spacing:2px}.hd-cal-grid td{height:48px;padding:0}.hd-cal-grid th{font-size:10px}.cal-ev{font-size:0;height:6px;padding:0;border-left-width:0;background:var(--cal-tone)}.cal-more{font-size:9px}.cal-form-row{grid-template-columns:1fr}}
+/* v3 (2026-11-07): full-width grid; each date is a button that opens the day modal. */
+.hd-cal .panel-head{flex-wrap:wrap}
+.cal-daybtn{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;width:100%;height:100%;min-height:102px;padding:6px;border:0;border-radius:10px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;overflow:hidden}
+.hd-cal-grid td:not(.is-out):hover{border-color:var(--hris-brand)}
+.hd-cal-grid td.is-out{padding:6px}
+.hd-cal .cal-legend{margin-top:12px}
+.cal-dialog{width:min(520px,calc(100vw - 32px));max-height:min(86vh,760px);padding:0;border:1px solid var(--hris-line);border-radius:16px;background:var(--hris-surface);color:var(--hris-text);box-shadow:var(--hris-shadow)}
+.cal-dialog::backdrop{background:rgba(15,18,24,.45)}
+.cal-dialog-in{display:grid;gap:12px;padding:18px 20px 20px}
+.cal-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cal-dialog-head h3{margin:0;font-size:17px}
+.cal-close{width:40px;height:40px;border:1px solid var(--hris-line);border-radius:10px;background:var(--hris-surface-2);color:var(--hris-text);font-size:20px;line-height:1;cursor:pointer}
+.cal-dialog .empty{margin:0;font-size:12px;padding:12px}
+.cal-dialog .cal-list{max-height:none}
+.cal-item[hidden],.cal-dialog [hidden]{display:none}
+@media(max-width:620px){.cal-daybtn{padding:3px;min-height:46px}.hd-cal-grid td.is-out{padding:3px}}
+@media(prefers-reduced-motion:no-preference){.cal-dialog[open]{animation:cal-in .15s ease-out}@keyframes cal-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+.cal-daybtn .d{align-self:flex-start;flex:0 0 auto}
+/* v5 (2026-11-07, migration 040): meeting link and invited guests. */
+.cal-join{display:inline-flex;align-items:center;gap:4px;margin-top:8px;min-height:36px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-color:var(--hris-info);color:var(--hris-info);text-decoration:none}
+.cal-join:hover{background:var(--hris-info-soft)}
+.cal-host{color:var(--hris-muted);font-weight:400}
+.cal-guests{display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--hris-line);border-radius:10px;min-width:0}
+.cal-guests legend{padding:0 4px;font-size:11.5px;font-weight:700;color:var(--hris-muted)}
+.cal-guests[hidden]{display:none}
+.cal-hint{margin:0;font-size:11px;color:var(--hris-muted)}
+.cal-results,.cal-people{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.cal-result{width:100%;min-height:40px;padding:6px 10px;border:1px solid var(--hris-line);border-radius:8px;background:var(--hris-surface-2);color:var(--hris-text);font:inherit;font-size:12px;text-align:left;cursor:pointer}
+.cal-result:hover{border-color:var(--hris-brand)}
+.cal-people li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 4px 10px;border-radius:8px;background:var(--hris-surface-2);font-size:12px;color:var(--hris-text)}
+.cal-people li span:first-child{min-width:0;overflow-wrap:anywhere}
+/* v6 (2026-11-07): readable header, month centred between the arrows, no Add button in the header. */
+.hd-cal-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:18px 20px 6px}
+.hd-cal-label h2{margin:0;font-size:18px;font-weight:750;color:var(--hris-text)}
+.hd-cal-label p{margin:3px 0 0;font-size:13px;color:var(--hris-muted)}
+.hd-cal-month{display:flex;align-items:center;justify-content:center;gap:10px}
+.hd-cal-current{min-width:11ch;text-align:center;font-size:22px;font-weight:800;letter-spacing:-.01em;color:var(--hris-text);font-variant-numeric:tabular-nums}
+.hd-cal-arrow{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid var(--hris-line);border-radius:999px;background:var(--hris-surface);color:var(--hris-text);font-size:22px;line-height:1;text-decoration:none;transition:border-color .15s,background .15s}
+.hd-cal-arrow:hover{border-color:var(--hris-brand);background:var(--hris-brand-soft)}
+.hd-cal-right{display:flex;justify-content:flex-end}
+.hd-cal-right .btn{min-height:40px}.hd-cal-right .btn[aria-current]{border-color:var(--hris-brand)}
+.hd-cal[aria-busy=true] .hd-cal-grid{opacity:.55;transition:opacity .15s}
+#calendar{scroll-margin-top:84px}
+@media(max-width:720px){.hd-cal-head{grid-template-columns:1fr auto;padding:14px 14px 4px}.hd-cal-month{grid-column:1/-1;grid-row:2}.hd-cal-current{font-size:19px}}

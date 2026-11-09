@@ -1,3 +1,53 @@
+## 2026-11-07 - Company export: billing sheets (local)
+- The one-company Excel now also has Billing Sheet, Sales Seg, Summary Sheet, CI (charge invoice) and Billing B, built like the payroll template and computed in Excel from the Payroll Summary. The Summary Sheet lists the days each employee is missing a punch.
+- The separate SSS Table sheet is gone; the SSS deduction still uses the same brackets.
+
+## 2026-11-07 - SSS Table sheet now computes (local)
+- The SSS Table sheet in the company export now has the same formulas as the SSS table file, so changing a salary credit recalculates the contributions and the SSS deduction on the Payroll Summary.
+
+## 2026-11-07 - Company export: Payroll Summary and SSS Table (local)
+- The one-company Excel now has the template's Payroll Summary sheet: pay per employee, subtotals per branch and a grand total, all as Excel formulas. Daily rate comes from Payroll Setup > Employee rates (755 when none), SSS from the new SSS Table sheet by gross pay, PhilHealth 2.5% of basic, Pag-IBIG 100. Adjustments, loans and other deductions are left for Payroll to type.
+- Days Present in the Timekeep Summary is now 8 per day worked, as in the template.
+
+## 2026-11-07 - Company export looks like the payroll template (local)
+- The one-company Excel now also has the template's look: Tahoma 8, cell borders, the same coloured column groups, d-mmm dates, h:mm times, "-" for zero, and the same hidden columns (Date Hired, Company, Department, Position and some pay columns can be unhidden in Excel).
+
+## 2026-11-07 - Company export uses the payroll template (local)
+- Choosing one company now downloads a single "Timekeep Summary" sheet in the same layout as the payroll template (header, employee row, days, totals). Ocampo's companies (Almandite, Artchic, Cryssoberyl, Ocampo's Ventures, Ocampo's) are one choice: Ocampos.
+
+## 2026-11-07 - Attendance Export by company (local)
+- Attendance Export now has a Company choice next to Cutoff. Pick one company to download only its employees in Excel or PDF, or keep All companies.
+
+## 2026-11-07 - Approver notification for payroll tickets (local)
+- When HR sends a payroll ticket, the assigned Manager/ADL now gets a bell notification and a badge on Team Approvals. It clears once they approve, return or reject it.
+
+## 2026-11-07 - Payroll Ticket Review: Verify & send to approver (local)
+- HR can now verify a payroll ticket and send it to the employee's Manager/ADL in one click from the review panel. Mark reviewed is now Mark reviewed (send later), for sending several at once from the Reviewed tab.
+
+## 2026-11-07 - Assigned areas for ADL only for ADLs (local)
+- In the Employee 201 Employment tab, the Assigned areas for ADL box now shows only for ADLs. It appears or hides right away when the Position or Directory role changes. Saved areas of other employees are kept untouched.
+
+## 2026-11-07 - Copy password copies the password (local)
+- Copy password in Password access no longer leaves the previously copied text (like the email) on the clipboard. If the browser blocks copying, the password is selected and the button says Press Ctrl+C.
+
+## 2026-11-07 - Calendar header and month switching (local)
+- The month name is now large and centred between the arrows. Switching months no longer jumps the page to the top. Add events from a date (the header Add event button was removed).
+
+## 2026-11-07 - Meeting links and invited guests on calendar events (local, migration 040)
+- Events can have a meeting link (Zoom, Google Meet, any app) with a Join meeting button. HR can choose who sees an event: Everyone, Invited guests only (pick employees by name), or HR only.
+
+## 2026-11-07 - Fixed payroll cutoffs on the calendar (local)
+- The calendar now shows the payroll schedule automatically: cutoff 4-18 paid on the 25th, cutoff 19-3 paid on the 10th. Payroll cutoff is no longer a choice when adding an event.
+
+## 2026-11-07 - Calendar day popup (local)
+- The calendar now uses the full width. Click a date to open a popup with that day's events; HR can add, edit or remove events there.
+
+## 2026-11-07 - Dashboard calendar events (local, migration 039)
+- HR can now add, edit and remove calendar events (payroll cutoff, pay date, holiday, company event, meeting, other) with a date range, and move between months. Ticked events also show on Employee Home (read-only).
+
+## 2026-11-07 - HR Dashboard calendar (design only, local)
+- New Calendar panel under the Overview cards: this month, today highlighted, agenda side with legend. Events and month navigation are not working yet ("Soon").
+
 ## 2026-11-05 - Pipeline card no longer overflows (local)
 - Kanban card footer wraps, so the screening rating badge (e.g. Outstanding) drops to its own line instead of spilling past the card in narrow columns. Job title shows up to 2 lines; name and job title have hover tooltips. No migration.
 

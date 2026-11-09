@@ -239,3 +239,20 @@ Update 2026-11-03 (declutter): hr-applicant sections Schedule interview, Offer, 
 - 2026-11-05: employee-team (My Team, employee portal, employees.view_team): read-only roster. Users & Access row menu Change role dialog for HR.
 
 - 2026-11-05: track (public) now also opens by private link `t=`; shows a Save your private tracking link panel (Copy link) when opened by link; 5-step applicant progress, outcome note.
+
+## 2026-11-07 - Dashboard calendar (`hr-dashboard`, `employee-dashboard`)
+Calendar panel under the HR Overview KPIs: month grid (?cal=YYYY-MM, Prev/Today/Next links), event titles in day cells (max 2 + N more), side agenda with the month's events, + Add event form, per-event Edit and Remove (confirm), legend. Employee Home shows the same panel read-only with employee-visible events only, between the top cards and Quick actions. BR-792.
+
+- 2026-11-07 v3 (John screenshot): agenda rail removed so the calendar grid is full width. Every date is a button; clicking it opens a modal (native dialog) with that day's events (HR: Edit/Remove per event + Add event on this day with the date prefilled; employees: read-only list). HR also has + Add event in the panel head (opens today). Legend under the grid.
+
+- 2026-11-07 v4: fixed payroll schedule on the calendar (BR-793): grid chips "Cutoff starts" / "Cutoff ends" on the first/last day and "Pay date" on the 10th/25th; the day modal lists the cutoff on every day it covers, marked "Fixed payroll schedule" with no Edit/Remove. Type list no longer offers Payroll cutoff.
+
+- 2026-11-07 v5: event form adds Meeting link and a Who can see this select (Everyone / Invited guests only / HR only); Invited guests only reveals a Guests picker (search by name, results as buttons, Enter adds the first, added guests listed with Remove, live status). Event cards show Join meeting (host name) and, for HR, the audience with guest names.
+
+- 2026-11-07 v6 (John screenshot): calendar header = "Calendar" (18px) + hint (13px) on the left, month name large and centred between round prev/next arrows, Today on the right; the header + Add event button was removed (add from a date's modal). Month arrows swap only the calendar in place (no page jump, focus stays on the arrow, URL updated); without JS they are normal links. Save/Remove return to #calendar.
+
+- 2026-11-07: Employee 201 Employment tab: Assigned areas for ADL box only for ADLs (hidden for other positions, live toggle). BR-795.
+
+- 2026-11-07: hr-timekeeping review panel: primary Verify & send to approver, secondary Mark reviewed (send later), Needs changes. BR-796.
+
+- 2026-11-07: payroll-cutoff (Attendance Export): Company select (All companies + Company Names) next to Cutoff; export panel heading says '<Company> only'. BR-798.

@@ -269,3 +269,12 @@ Route `employee-team` now uses `.myteam` (panel, toolbar, table that stacks at <
 v3 (2026-11-05): Swiss-minimal pass per SPEC addendum v3: initials avatar (decorative), code chip, ghost Clear, soft search bar, sentence-case header, mobile cards, reduced-motion. Presentation only; data/scope/paging unchanged.
 
 - 2026-11-05 My Team v4 compact: inline search (hidden label + placeholder), 44px rows/controls, 28px avatar. CSS ver my-team-ui4.
+
+## 2026-11-07 - Dashboard calendar (migration 039)
+HR Dashboard has a Calendar panel where HR users add payroll cutoffs, pay dates, holidays, company events, meetings and other events (date range, optional times, notes). Ticked events also show read-only on Employee Home. Display only, not a payroll input. BR-792. Code: app/CalendarEvents.php, app/CalendarViews.php, public/assets/calendar.css; tests calendar_events_db_test (19) and calendar_events_http_test (13).
+
+- 2026-11-07 v5 (migration 040): meeting link on events (Join meeting) and Invited guests only events that only the picked employees see on Employee Home. BR-794. Guest search: GET calendar-people.
+
+- 2026-11-07: Password access message now says which cause applies (no saved copy -> reset; credential key missing on this computer -> restore the original key; key mismatch -> restore key or reset).
+
+- 2026-11-07: the clearer Password access message was reverted at John's request; original message is back.

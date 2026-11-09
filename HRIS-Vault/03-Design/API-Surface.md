@@ -253,3 +253,13 @@ Update 2026-11-02: POST action upload_own_photo (page employee-profile): any int
 - 2026-11-05: GET index.php?page=employee-team&q=&p= (employees.view_team). POST change_user_role: users.manage -> changeUserRole, else users.assign_employee_role -> changeEmployeeUserRole (CSRF global).
 
 - 2026-11-05: GET index.php?page=track&t=<64 hex> (public, private link) or &ref=&email= (public). POST apply now redirects to track&t=<token> (no email/ref in URL); falls back to track&ref= if the link cannot be issued.
+
+- 2026-11-07: POST action calendar_save (redirects to hr-dashboard&cal=YYYY-MM): dashboard.hr.view, CSRF; fields id (blank = new), title, event_type, start_date, end_date, start_time, end_time, notes, visible_to_employees, cal. POST calendar_delete: dashboard.hr.view, CSRF; id, cal (soft delete). GET hr-dashboard / employee-dashboard accept &cal=YYYY-MM (invalid = this month). BR-792.
+
+- 2026-11-07: GET index.php?page=calendar-people&q= (dashboard.hr.view): JSON {people:[{id,name,branch}]} of active accounts, 2+ characters, 10 max (reuses TicketIncident::searchPeople). POST calendar_save gains meeting_url, audience (ALL|GUESTS|HR, replaces visible_to_employees; the old checkbox is still read when audience is absent) and guests[] (user ids). BR-794.
+
+- 2026-11-07: notifications kind PAYROLL_APPROVAL (dedupe payroll-approval:<request>:<step>), shown in the bell and counted on Team Approvals (manager-approvals). BR-797.
+
+- 2026-11-07: GET payroll-cutoff and payroll-export accept company_id (business unit id; unknown = refused on download, ignored on the page). POST payroll_v2_download_cutoff carries company_id to the download redirect. BR-798.
+
+- 2026-11-07: company_id is now "OC" (Ocampos, all OC-group companies) or a company id (payroll_company_arg: anything else dropped). BR-799.

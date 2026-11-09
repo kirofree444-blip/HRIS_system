@@ -5,6 +5,9 @@ require_once __DIR__.'/PayrollCutoffExportReview.php';
 function payroll_attendance_export_page(array $cutoffs,int $cutoffId): void
 {
     Auth::requirePermission('payroll.process');
+    // Company filter for the download only (John 2026-11-07); the cutoff data and its checks stay for everyone.
+    $companies=PayrollCutoffDocuments::companies();$companyArg=payroll_company_arg($_GET);$companyId=(string)($companyArg['company_id']??'');
+    if(!isset($companies[$companyId])){$companyId='';$companyArg=[];}// "OC" = Ocampos (all Ocampo's group companies), else one company id
     render_portal_header('hr','payroll-cutoff','Attendance Export');
     echo '<div class="attendance-export" data-attendance-export>';
     $actions=Auth::can('payroll.biometric_import')?'<a class="btn" href="'.url('payroll-import',['cutoff_id'=>$cutoffId]).'">'.icon_svg('files').'Import logs</a>':'';
@@ -17,7 +20,9 @@ function payroll_attendance_export_page(array $cutoffs,int $cutoffId): void
       <label for="export-cutoff">Cutoff</label>
       <select id="export-cutoff" name="cutoff_id">
       <?php foreach($cutoffs as $cutoff):?><option value="<?=(int)$cutoff['id']?>" <?=(int)$cutoff['id']===$cutoffId?'selected':''?>><?=e(date('M j',strtotime($cutoff['period_start'])).' – '.date('M j, Y',strtotime($cutoff['period_end'])))?></option><?php endforeach;?>
-      </select><noscript><button class="btn">View cutoff</button></noscript>
+      </select>
+      <label for="export-company">Company</label>
+      <select id="export-company" name="company_id"><option value="">All companies</option><?php foreach($companies as $cid=>$choice):?><option value="<?=e((string)$cid)?>" <?=(string)$cid===$companyId?'selected':''?>><?=e($choice['label'])?></option><?php endforeach;?></select><noscript><button class="btn">View cutoff</button></noscript>
     </form>
     <?php
     if(!PayrollCutoffExportService::ready()) {
@@ -57,12 +62,12 @@ function payroll_attendance_export_page(array $cutoffs,int $cutoffId): void
     <?php if(Auth::can('payroll.export')):?>
     <section class="panel export-options" id="export-all-logs" data-export-panel aria-labelledby="export-all-title">
       <div class="export-options-head"><h2 id="export-all-title"><?=icon_svg('download')?>Export all logs</h2><button type="button" class="btn sm export-close" data-export-close hidden aria-label="Close export options"><?=icon_svg('x')?></button></div>
-      <div class="export-options-copy"><h3>All <?=count($model['employees'])?> employees · <?=e(date('M j',strtotime($run['period_start'])).' – '.date('M j, Y',strtotime($run['period_end'])))?></h3><p>Every employee and date in this cutoff, across all groups.</p>
+      <div class="export-options-copy"><h3><?=$companyId!==''?e($companies[$companyId]['label']).' only · ':'All '.count($model['employees']).' employees · '?><?=e(date('M j',strtotime($run['period_start'])).' – '.date('M j, Y',strtotime($run['period_end'])))?></h3><p><?=$companyId!==''?'Only employees of this company are in the file. Choose All companies to export everyone.':'Every employee and date in this cutoff, across all groups.'?></p>
       <?php if(!$finalDownload):?><div class="export-review-notice"><?=icon_svg('info')?><div><strong>For review</strong><span>Export now, even with missing logs. Missing times stay blank. Pending requests are listed separately.</span><small>This download keeps the cutoff status the same.</small></div></div><?php else:?><p>Choose a file for PMBSI HR.</p><?php endif;?></div>
       <div class="export-format-grid">
         <?php foreach(['xlsx'=>'Excel','pdf'=>'PDF'] as $format=>$label):$content=icon_svg($format==='xlsx'?'table':'file').'<span><strong>Download '.$label.'</strong><small>'.($format==='xlsx'?'Full attendance · tabs by department or area / branch':'Full logs · grouped by department or area / branch').'</small></span>'.icon_svg('arrow');
           if($finalDownload&&!$batch):?><button type="button" class="export-format" data-export-download="<?=$format?>" hidden><?=$content?></button>
-          <?php else:?><a class="export-format" href="<?=url('payroll-export',['cutoff_id'=>$cutoffId,'format'=>$format,'mode'=>$finalDownload?'final':'review'])?>"><?=$content?></a><?php endif;endforeach;?>
+          <?php else:?><a class="export-format" href="<?=url('payroll-export',['cutoff_id'=>$cutoffId,'format'=>$format,'mode'=>$finalDownload?'final':'review']+$companyArg)?>"><?=$content?></a><?php endif;endforeach;?>
       </div>
       <?php if($state==='legacy'):?><p class="export-row-note"><a href="<?=url('payroll-export',['cutoff_id'=>$cutoffId])?>">Download older CSV</a></p><?php endif;?>
       <div class="export-foot">Yellow marks show approved TA / OB / OT changes. Existing clock times are kept.</div>
@@ -73,11 +78,11 @@ function payroll_attendance_export_page(array $cutoffs,int $cutoffId): void
       <h2>Download all final logs as <span data-export-format-label>Excel</span>?</h2>
       <p><?=e($run['period_start'].' to '.$run['period_end'])?> · all <?=count($model['employees'])?> employees<br>This saves the final attendance and closes the cutoff to new changes.</p>
       <form method="post" data-export-download-form>
-        <?php payroll_hidden_action('download_cutoff');?><input type="hidden" name="cutoff_id" value="<?=$cutoffId?>"><input type="hidden" name="filing_closed" value="1"><input type="hidden" name="format" value="xlsx" data-export-format>
+        <?php payroll_hidden_action('download_cutoff');?><input type="hidden" name="cutoff_id" value="<?=$cutoffId?>"><?php if($companyId!==''):?><input type="hidden" name="company_id" value="<?=e($companyId)?>"><?php endif;?><input type="hidden" name="filing_closed" value="1"><input type="hidden" name="format" value="xlsx" data-export-format>
         <button class="btn primary" data-export-confirm-download><?=icon_svg('download')?>Download <span data-export-format-label>Excel</span></button><button type="button" class="btn" data-export-cancel>Cancel</button>
       </form>
     </section>
-    <noscript><form method="post" class="panel export-confirm"><?php payroll_hidden_action('download_cutoff');?><input type="hidden" name="cutoff_id" value="<?=$cutoffId?>"><label><input type="checkbox" name="filing_closed" value="1" required> Save all final attendance and close this cutoff to new changes.</label><button class="btn primary" name="format" value="xlsx">Download Excel</button><button class="btn" name="format" value="pdf">Download PDF</button></form></noscript>
+    <noscript><form method="post" class="panel export-confirm"><?php payroll_hidden_action('download_cutoff');?><input type="hidden" name="cutoff_id" value="<?=$cutoffId?>"><?php if($companyId!==''):?><input type="hidden" name="company_id" value="<?=e($companyId)?>"><?php endif;?><label><input type="checkbox" name="filing_closed" value="1" required> Save all final attendance and close this cutoff to new changes.</label><button class="btn primary" name="format" value="xlsx">Download Excel</button><button class="btn" name="format" value="pdf">Download PDF</button></form></noscript>
     <?php endif;
     if(!$batch&&$state!=='legacy') payroll_attendance_export_remaining($cutoffId,$model,$review);
     payroll_attendance_export_details($cutoffId,$model,$sources);

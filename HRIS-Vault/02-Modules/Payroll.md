@@ -285,3 +285,19 @@ See [[Business-Rules]] for full statements. Payroll-critical ones:
 [[Attendance-and-DTR]] · [[Leave-Management]] · [[Employee-Records]] · [[Org-Structure]] · [[Reports-and-Analytics]] · [[Self-Service-Portal]] · [[Offboarding-and-Clearance]] · [[Business-Rules]] · [[Data-Model]] · [[API-Surface]] · [[Screens]] · [[Security-and-Compliance]] · [[ADR-003-Payroll-Engine-Approach]] · [[PH-Labor-and-Payroll-Notes]] · [[Glossary]] · [[Notifications]]
 
 Hub for HR requests: [[Employee-Tickets]] · UI rules: [[Design-System]]
+
+## 2026-11-07 - Cutoff and pay date rule (John)
+Cutoff 4-18 -> payable on the 25th; cutoff 19-3 -> payable on the 10th of the next month. Matches all payroll_cutoffs rows on 2026-11-07. Shown read-only on the dashboard calendar (BR-793); answers the pattern part of Q4 (pay date shifting still open, Q-cal3).
+
+## 2026-11-07 - One-click Verify & send (Payroll Ticket Review)
+Report: after Mark reviewed the Manager/ADL did not receive the ticket. Cause: Mark reviewed only marked it on the HR page; only Send for approval moved it. Fix: Verify & send to approver in the review panel (BR-796), Mark reviewed kept as send later, help text updated. Server routing was already correct (checked on local data). Test: tests/payroll_send_one_test.php (11).
+
+- 2026-11-07 option C: PayrollRepository::decidePayroll notifies the next Manager/ADL approver (NotificationService, kind PAYROLL_APPROVAL) and marks it read when they decide; NotificationService::sidebarPage maps it to manager-approvals. Found, not changed: the Team Approvals menu item is gated on payroll.approve_manager, so roles with only payroll.approve_adl (TC, HRIS_ADMIN, SUPER_ADMIN locally) do not see the menu or badge (ADL role has both).
+
+## 2026-11-07 - Attendance Export company filter
+Company select next to Cutoff (payroll-cutoff, GET company_id). PayrollCutoffDocuments::companies() + onlyCompany() filter the download only (review and final). Page cards and checks still count the whole cutoff. Test: tests/attendance_export_company_test.php (11). Next: John's company templates.
+
+- 2026-11-07 export v2: one-company Excel = John's Timekeep Summary layout (BR-799); "Ocampos" choice merges the OC group. PayrollCutoffDocuments::timekeepSheet(), companies() now key => [label, names]; payroll_company_arg() carries OC or a company id. Test 17 checks.
+- 2026-11-07 export v3: Timekeep Summary also copies the template look (BR-799): tkRow()/tkStyle()/tkXf() write every grid cell in column order with a Tahoma 8 bordered style; styles() appends 180 template xfs after the 10 old ones (other sheets unchanged). Test 18 checks.
+- 2026-11-07 export v4: Payroll Summary + SSS Table sheets in the one-company Excel (BR-800). PayrollCutoffDocuments::payrollSheet()/psRow()/psStyle()/sssSheet()/dailyRates(); timekeepSheet() returns the info/TOTAL row index; Days Present now 8. Config: config/payroll_summary.php (default daily 755, PhilHealth 2.5%, Pag-IBIG 100, SSS table). Test 28 checks.
+- 2026-11-07 export v5: SSS Table sheet removed (brackets inline in the SSS LOOKUP); Billing Sheet, Sales Seg, Summary Sheet, CI and Billing B added (BR-801). payrollSheet() returns the row layout; billingSheet()/salesSegSheet()/attendanceSummarySheet()/ciSheet() with gridRow()/totalRows(); timekeep index carries missing-punch days. Config: billing_sheet, billing_b, ci. Test 33 checks.

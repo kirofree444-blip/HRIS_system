@@ -78,7 +78,7 @@ document.querySelectorAll('[data-hr-review-workspace]').forEach(function (worksp
     if (waiting) waiting.hidden = tab === 'reviewed' && visibleReviewed.length > 0;
     if (help) help.textContent = tab === 'reviewed'
       ? 'Select the checked requests, then Send for approval. Reviewed marks last until you leave this page.'
-      : 'Click Review, check the details, then Mark reviewed. Selection appears in Reviewed.';
+      : 'Click Review, check the details, then Verify & send to approver. To send several at once, use Mark reviewed (send later) and the Reviewed tab.';
     if (count) count.textContent = selected + ' selected · reviewed';
     if (bulk) bulk.hidden = selected === 0;
     if (submit) { submit.disabled = selected === 0; submit.querySelector('[data-cutoff-submit-label]').textContent = 'Send for approval (' + selected + ')'; }
@@ -137,6 +137,7 @@ document.querySelectorAll('[data-hr-review-workspace]').forEach(function (worksp
         const mark = body.querySelector('[data-hr-mark-reviewed]');
         if (mark && (!row || Number(loaded.dataset.hrLoadedStep) !== Number(row.querySelector('[name^="hr_steps"]').value))) {
           mark.disabled = true; mark.textContent = 'Request changed · refresh page';
+          const sendOne = body.querySelector('[data-hr-send-one] button'); if (sendOne) sendOne.disabled = true;
         }
         syncDetail();
         panel.querySelector('[data-hr-close]').focus();

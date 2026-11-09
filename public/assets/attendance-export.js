@@ -1,7 +1,7 @@
 // Progressive UI only. PHP controls current reports and final export locking.
 document.querySelectorAll('[data-attendance-export]').forEach(function (workspace) {
-  const selector = workspace.querySelector('[data-export-cutoff] select');
-  if (selector) selector.addEventListener('change', function () { selector.form.requestSubmit(); });
+  // Cutoff and Company selects reload the page for that choice (Company filters the download only).
+  workspace.querySelectorAll('[data-export-cutoff] select').forEach(function (selector) { selector.addEventListener('change', function () { selector.form.requestSubmit(); }); });
   const confirmation = workspace.querySelector('[data-export-confirm]');
   const exportPanel = workspace.querySelector('[data-export-panel]');
   const exportLauncher = workspace.querySelector('[data-export-launch]');

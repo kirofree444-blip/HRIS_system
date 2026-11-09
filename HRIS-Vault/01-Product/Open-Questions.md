@@ -171,3 +171,28 @@ Related: [[Decision-Log]] · [[Roadmap]] · [[Business-Rules]] · [[PH-Labor-and
 - 2026-11-04 department-picker: (1) A new department created in Organization Setup is not selectable on employee forms until it is mapped to a main department in code; consider adding a Main department field in Organization Setup (not built). (2) HR assumed = PMBSI HR only; 'Human Resources Assistant' still sits under Admin/Manpower. (3) Duplicate positions (ADL x3, Billing and Collection Staff x3) and position id 25 with no department are untouched. (4) SPEC-form-keep-input.md Module 2 (keep typed input after an error or refresh) is the next slice, not started.
 
 - 2026-11-05 applicant-tracking-link: (1) no revoke/reissue UI yet (revoked_at reserved; needs an approved identity rule for lost links); (2) set app.base_url in config.local.php to enable the Gmail link (hosting URL for public use); (3) no rate limit on ref/email lookup (pre-existing); (4) tests/employee_profile_http_test.php "no form" check is stale since the own-photo form (cc00eb0): update the test, do not lower the floor.
+
+- Q-cal1 (2026-11-07): Should calendar Holiday / Payroll cutoff events ever feed payroll (holiday day types, cutoff dates)? Today they are display only (BR-792); payroll still uses payroll_cutoffs and needs the verified holiday calendar (NEEDS VERIFICATION).
+- Q-cal2 (2026-11-07): Should employee-visible events be filtered per branch/company (local holidays, different cutoffs per company)? Today every employee sees every ticked event.
+
+- Q-cal3 (2026-11-07): When the 10th or 25th falls on a weekend or holiday, is pay moved earlier, later, or kept? The calendar shows the plain date today.
+
+- Q-cal4 (2026-11-07): Should invited guests get a notification (bell or email) when HR adds them to an event or announcement? Today they only see it on their calendar.
+
+- Q37 update (2026-11-07): non-ADL stored areas (e.g. a Sales Captain with Ocampos) are now hidden and kept untouched by saves; clearing them still needs John's word.
+
+- Q-pay1 (2026-11-07): Should the Manager/ADL get a bell notification and an Approvals badge when a payroll ticket reaches them (option C, not done)? Also run the provided read-only SQL on hosting to find pending ADL/Manager steps whose approver has no active account.
+
+- Q-pay1 update (2026-11-07): bell + badge done (BR-797). Still open: email to approvers; TC role has payroll.approve_adl but no Team Approvals menu (nav needs payroll.approve_manager) - permission change, needs John.
+
+- Q-exp1 (2026-11-07): The template's other sheets (Payroll Summary, Billing Sheet/B, Sales Seg, CI, Summary Sheet) need pay rates, SSS/PhilHealth/HDMF, admin fee and VAT. Build them later? (payroll rules, NEEDS VERIFICATION)
+  - 2026-11-07 answered (John): Payroll Summary (BR-800) and Billing Sheet/B, Sales Seg, Summary Sheet, CI (BR-801) built.
+- Q-exp6 (2026-11-07): CI bills full Total Earnings on both invoices (its formulas read Billing AE..AX, not the 60%/40% Direct Cost), so left and right CI totals are equal. Should each CI use its billing sheet Direct Cost / TOTAL BILLING instead?
+- Q-exp7 (2026-11-07): Admin fee differs: CI 3% of direct cost vs Billing Sheet 10% / Billing B 5%. Which is right for each client? (NEEDS VERIFICATION)
+- Q-exp8 (2026-11-07): Billing 60%/40% shares, admin %, VAT 12% and EWT 2% are the template figures in config. Same for every company/client? (NEEDS VERIFICATION)
+- Q-exp10 (2026-11-07): Every one-company export (not only Ocampos) now gets Billing Sheet, Sales Seg, CI and Billing B with the Ocampos template figures (60/40, 10%/5%/3% admin, Prime Mover header). Keep for all companies, or only for companies with a billing template (BR-798 said templates per company to follow)?
+- Q-exp9 (2026-11-07): Sales Seg PHIC/Pagibig employer share read Payroll Summary CG/CH (blank) and EC/SSS are blank, as in the template. Fill employer shares?
+- Q-exp3 (2026-11-07): Is the SSS table in sss-table.xlsx ("2025") the schedule in force for 2026 cutoffs? (NEEDS VERIFICATION)
+- Q-exp4 (2026-11-07): Pag-IBIG 100 is skipped (0) when an employee has no pay in the cutoff, so NET PAY is not negative. Keep, or always deduct 100?
+- Q-exp5 (2026-11-07): Monthly-basis rates in Employee rates are turned into Daily as amount / divisor x 8. Correct for your monthly-paid staff?
+- Q-exp2 (2026-11-07): Template TOTAL uses 8 hours/day (Y=U*8-W-X). Confirm for all schedules; Remarks wording (template: LEAVE, "WITH TA") vs our notes.

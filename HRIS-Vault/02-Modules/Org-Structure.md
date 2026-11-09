@@ -190,3 +190,6 @@ Hub for HR requests: [[Employee-Tickets]] · UI rules: [[Design-System]]
 
 ## Addendum 2026-11-04 - Departments in the employee form
 - The long department list stays in Organization Setup unchanged. The employee forms show only the 7 main departments; a new department added here appears in the form only after it is mapped in DepartmentPicker::groupOf (tests/department_picker_test.php fails to flag an unmapped active department). 'Online Shop' was renamed 'Online' (migration 034).
+
+## 2026-11-07 - Assigned areas for ADL only for ADLs
+Employee 201 edit form hides and disables the box for non-ADLs (live with Position / Directory role). EmployeeDirectoryPlacement::isAdl() mirrors isAdlSql(); save() keeps stored areas for non-ADLs. BR-795. Test: tests/adl_areas_visibility_test.php (14).

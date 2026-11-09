@@ -1,6 +1,6 @@
 # Spec: adl-areas-only-for-adl ("Assigned areas for ADL" shows only for ADLs)
 
-Status: DRAFT, waiting for John's approval. Single capability, so no capability map (Phase 0 skipped). Not implemented yet.
+Status: DONE 2026-11-07 (John: option A, ADL only). Defaults used for open questions 1-3: keep non-ADL stored areas; Directory role counts; Add Employee form has no areas box, so nothing to hide there.
 
 ## Objective
 In Employee 201 (edit form), the **Assigned areas for ADL** checkbox box must appear only when the employee is an ADL (Area Development Leader). It must not appear for Retail Staff, Sales Captain, OIC, MT, or any other position (screenshot 2026-11-04 19:52).

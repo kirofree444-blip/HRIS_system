@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/HrDashboard.php';
 require_once __DIR__.'/TicketQueueViews.php';
+require_once __DIR__.'/CalendarViews.php';
 
 function hd_greeting():string { $h=(int)date('G');return $h<12?'Good morning':($h<18?'Good afternoon':'Good evening'); }
 
@@ -29,7 +30,7 @@ function hr_dashboard_page():void
     $interviews=db()->query('SELECT i.*, CONCAT(ap.first_name," ",ap.last_name) applicant_name,j.title job_title FROM interviews i JOIN applications a ON a.id=i.application_id JOIN applicants ap ON ap.id=a.applicant_id JOIN job_openings j ON j.id=a.job_opening_id WHERE DATE(i.scheduled_at)=CURDATE() ORDER BY i.scheduled_at LIMIT 6')->fetchAll();
     $first=explode(' ',trim((string)(Auth::user()['name']??'HR Team')))[0];
     render_portal_header('hr','hr-dashboard','HR Dashboard');
-    echo '<link rel="stylesheet" href="public/assets/hr-ops.css?v=20261031-hd2">';
+    echo '<link rel="stylesheet" href="public/assets/hr-ops.css?v=20261031-hd2"><link rel="stylesheet" href="public/assets/calendar.css?v=20261107-cal6">';
     ?>
 <div class="hd2">
     <header class="hd-head"><div><div class="eyebrow">Human Resources</div><h1><?=e(hd_greeting().', '.$first.'.')?></h1><p>Workforce, request and recruitment activity that needs your attention.</p></div>
@@ -57,6 +58,7 @@ function hr_dashboard_page():void
       $ov=ob_get_clean();?>
     <?php if($act!==''):?><h2 class="hd-tier-title">Needs action</h2><div class="hd-kpis hd-tier-act"><?=$act?></div><?php endif;?>
     <h2 class="hd-tier-title">Overview</h2><div class="hd-kpis hd-tier-ov"><?=$ov?></div>
+    <?php $calMonth=CalendarEvents::month($_GET['cal']??null);calendar_panel($calMonth,CalendarEvents::forMonth($calMonth,false),true,'hr-dashboard',array_filter(['company'=>$p['company']!=='ALL'?$p['company']:null,'period'=>$p['period']!=='this_week'?$p['period']:null]));?>
 
     <?php if($d['is_hr']):$maxType=max(1,...array_values(array_map(fn($x)=>$x["total"],$t["types"])));$ageMax=max(1,array_sum($t['age']));
       $segs=['pending'=>'Pending','progress'=>'In progress','served'=>'Served','cancelled'=>'Cancelled','other'=>'Other (awaiting approver, returned, rejected)'];?>
