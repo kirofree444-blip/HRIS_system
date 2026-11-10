@@ -3,10 +3,13 @@ title: Leave Management
 type: module
 status: draft
 tags: [module, hris, mvp, ph-statutory]
-updated: 2026-10-17
+updated: 2026-11-10
 ---
 
 # Leave Management
+
+> [!note] As built (2026-11-10) vs. the plan below
+> A simpler version is already live on localhost, inside `PayrollRepository` (not a separate Leave service, and not the `leave_ledger`/multi-level/delegation design the rest of this note plans): tables `leave_types`, `leave_requests`, `leave_request_approvals`, `employee_leave_balances` (stored balance, not purely ledger-derived) and `leave_credit_transactions` (manual HR adjustments only — no automated accrual, Flow 3 below is not built). Approval is exactly 2 steps: the employee's immediate supervisor (Manager for a Head Office employee, ADL for a branch employee — same Manager-or-ADL routing as [[Employee-Tickets]]'s Payroll Concern, via `PayrollAttendanceService::route()`), then HR (`leave.approve_hr`). Bell notifications now fire at each step: the Manager/ADL on filing, HR once the Manager/ADL approves. See `PayrollRepository::createLeaveRequest/decideLeave/notifyLeaveApprover/notifyLeaveHr`. Leave types are renamed/deactivated in `leave_types` directly (no admin UI yet): "Vacation Leave" is now labeled **Service Incentive Leave (SIL)** (code stays `VL`), and **Sick Leave is deactivated** (`active=0`, not deleted). Filing rules (2026-11-10): SIL is always a single day — only a From date is collected, To is forced equal to From server-side; every other active type keeps From/To but cannot be backdated (From must be today or later) except **Unpaid Leave**, which may still be filed for a past date. The rest of this note is the target design (BR-401.. below), not yet implemented — read it as the plan, not the current behavior.
 
 ## Purpose
 

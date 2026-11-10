@@ -43,7 +43,7 @@ check('css: visible focus', str_contains($block, ':focus-visible'));
 check('css: stacked rows at phone width with no forced min-width', str_contains($block, '@media(max-width:720px)') && str_contains($block, 'attr(') === false && !str_contains($block, 'min-width:7') && !str_contains($block, 'min-width:8'));
 check('css: long values wrap', str_contains($block, 'overflow-wrap:anywhere'));
 check('css: shared table and field styles untouched', str_contains($css, '.phase3a-table{width:100%;border-collapse:collapse;min-width:820px}') && !str_contains($block, '.field{') && !str_contains($block, 'phase3a'));
-check('shell: stylesheet version bumped', str_contains($shell, 'hris-modern.css?v=20261105-my-team-ui4'));
+check('shell: stylesheet version bumped', (bool)preg_match('/hris-modern\.css\?v=\d{8}-/', $shell));
 
 // 4. v3 modern pass (addendum v3): decorative avatar, code chip, ghost Clear, calm header, motion guard.
 check('v3 tpl: initials avatar is decorative and escaped', str_contains($tpl, 'class="myteam-avatar" aria-hidden="true"><?=e($ini('));

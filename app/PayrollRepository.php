@@ -136,6 +136,34 @@ final class PayrollRepository
             'link'=>url('payroll-request',['id'=>(int)$req['id']]),'dedupe_key'=>'payroll-approval:'.(int)$req['id'].':'.$step]);
     }
 
+    /** One unread bell row for the Manager/ADL a filed leave now waits for. No email. */
+    private static function notifyLeaveApprover(array $employee,array $leave,int $approverUserId,int $step): void
+    {
+        if($approverUserId<1 || !NotificationService::ready()) return;
+        $who=trim((string)($employee['first_name']??'').' '.(string)($employee['last_name']??''));
+        NotificationService::create(['recipient_user_id'=>$approverUserId,'subject_employee_id'=>(int)($employee['id']??0)?:null,'kind'=>'LEAVE_APPROVAL',
+            'title'=>'Leave request to approve: '.(string)($leave['leave_type_name']??'Leave').($who!==''?' · '.$who:''),
+            'body'=>(string)($leave['request_no']??'').' is waiting for your approval.',
+            'link'=>url('manager-approvals'),'dedupe_key'=>'leave-approval:'.(int)$leave['id'].':'.$step]);
+    }
+
+    /** One unread bell row for every active HR Leave approver once the Manager/ADL step clears. No email. */
+    private static function notifyLeaveHr(array $leave): void
+    {
+        if(!NotificationService::ready()) return;
+        foreach(self::leaveHrReviewerIds() as $uid) {
+            NotificationService::create(['recipient_user_id'=>$uid,'subject_employee_id'=>(int)($leave['employee_id']??0)?:null,'kind'=>'LEAVE_APPROVAL',
+                'title'=>'Leave request to approve: '.(string)($leave['leave_type_name']??'Leave'),
+                'body'=>(string)($leave['request_no']??'').' was approved by the Manager/ADL and is waiting for HR.',
+                'link'=>url('hr-leave'),'dedupe_key'=>'leave-approval-hr:'.(int)$leave['id'].':'.$uid]);
+        }
+    }
+
+    private static function leaveHrReviewerIds(): array
+    {
+        return array_map('intval',db()->query('SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id WHERE u.status="ACTIVE" AND (r.code="SUPER_ADMIN" OR EXISTS(SELECT 1 FROM role_permissions rp JOIN permissions p ON p.id=rp.permission_id WHERE rp.role_id=r.id AND p.code="leave.approve_hr"))')->fetchAll(PDO::FETCH_COLUMN));
+    }
+
     public static function payrollRequest(int $id): ?array
     {
         $st=db()->prepare('SELECT pr.*,prt.code type_code,prt.name type_name,prt.category,prt.requires_attachment,
@@ -305,7 +333,7 @@ final class PayrollRepository
             JOIN leave_types lt ON lt.id=lr.leave_type_id
             JOIN employees e ON e.id=lr.employee_id
             LEFT JOIN branches b ON b.id=e.branch_id
-            WHERE a.approver_type="MANAGER" AND a.acted_by=?
+            WHERE a.approver_type IN ("MANAGER","ADL") AND a.acted_by=?
               AND a.status IN ("APPROVED","REJECTED","RETURNED")
             ORDER BY a.acted_at DESC,a.id DESC LIMIT '.$limit;
         $st=db()->prepare($sql);$st->execute([$uid]);return $st->fetchAll();
@@ -415,7 +443,7 @@ final class PayrollRepository
     {
         if(!FoundationRepository::tableExists('leave_types'))return [];
         $st=db()->prepare('SELECT lt.id,lt.code,lt.name,lt.paid,lt.requires_credit,COALESCE(b.balance,0) balance,
-            COALESCE((SELECT SUM(lr.days) FROM leave_requests lr WHERE lr.employee_id=? AND lr.leave_type_id=lt.id AND lr.status IN ("FOR_MANAGER_APPROVAL","FOR_HR_LEAVE_APPROVAL")),0) pending
+            COALESCE((SELECT SUM(lr.days) FROM leave_requests lr WHERE lr.employee_id=? AND lr.leave_type_id=lt.id AND lr.status IN ("FOR_MANAGER_APPROVAL","FOR_ADL_APPROVAL","FOR_HR_LEAVE_APPROVAL")),0) pending
             FROM leave_types lt LEFT JOIN employee_leave_balances b ON b.leave_type_id=lt.id AND b.employee_id=? WHERE lt.active=1 ORDER BY lt.sort_order,lt.name');
         $st->execute([$employeeId,$employeeId]);return $st->fetchAll();
     }
@@ -437,25 +465,29 @@ final class PayrollRepository
     {
         $employee=EmployeeRepository::find($employeeId);if(!$employee|| (int)($employee['user_id']??0)!==(int)(Auth::user()['id']??0))throw new RuntimeException('Employee record is not linked to this account.');
         $typeId=(int)($data['leave_type_id']??0);$st=db()->prepare('SELECT * FROM leave_types WHERE id=? AND active=1');$st->execute([$typeId]);$type=$st->fetch();if(!$type)throw new RuntimeException('Choose a valid leave type.');
-        $from=self::validDate((string)($data['date_from']??''));$to=self::validDate((string)($data['date_to']??''));if(!$from||!$to||$to<$from)throw new RuntimeException('Enter a valid leave date range.');
+        $typeCode=strtoupper((string)$type['code']);
+        $from=self::validDate((string)($data['date_from']??''));$to=$typeCode==='VL'?$from:self::validDate((string)($data['date_to']??''));if(!$from||!$to||$to<$from)throw new RuntimeException('Enter a valid leave date range.');
+        if($typeCode!=='UNPAID' && $from<date('Y-m-d'))throw new RuntimeException('Choose today or a later date for this leave type.');
         $days=(new DateTimeImmutable($from))->diff(new DateTimeImmutable($to))->days+1;$days=(float)$days;
         $reason=trim((string)($data['reason']??''));if($reason==='')throw new RuntimeException('Reason is required.');
         $st=db()->prepare('SELECT COUNT(*) FROM leave_requests WHERE employee_id=? AND status NOT IN ("REJECTED","CANCELLED") AND date_from<=? AND date_to>=?');$st->execute([$employeeId,$to,$from]);if((int)$st->fetchColumn()>0)throw new RuntimeException('You already have a leave request overlapping this date range.');
         if((int)$type['requires_credit']===1){$st=db()->prepare('SELECT balance FROM employee_leave_balances WHERE employee_id=? AND leave_type_id=?');$st->execute([$employeeId,$typeId]);$bal=(float)($st->fetchColumn()?:0);if($days>$bal)throw new RuntimeException('Insufficient leave credits for this request.');}
-        $managerUserId=self::managerApproverUserId($employee);
-        if(!$managerUserId)throw new RuntimeException('Your assigned Immediate Manager must have an active HRIS Manager account with approval access.');
+        $route=PayrollAttendanceService::route($employee);
+        $status=$route['type']==='ADL'?'FOR_ADL_APPROVAL':'FOR_MANAGER_APPROVAL';
         $uid=(int)(Auth::user()['id']??0);$no=self::nextRequestNo('LVR','leave_requests');
         db()->beginTransaction();try{
-            $st=db()->prepare('INSERT INTO leave_requests(request_no,employee_id,leave_type_id,date_from,date_to,days,reason,status,current_step,created_by) VALUES(?,?,?,?,?,?,?,"FOR_MANAGER_APPROVAL",1,?)');$st->execute([$no,$employeeId,$typeId,$from,$to,$days,$reason,$uid]);$id=(int)db()->lastInsertId();
-            $st=db()->prepare('INSERT INTO leave_request_approvals(request_id,step_no,approver_type,approver_user_id,status) VALUES(?,1,"MANAGER",?,"PENDING"),(?,2,"HR_LEAVE",NULL,"PENDING")');$st->execute([$id,$managerUserId,$id]);db()->commit();
+            $st=db()->prepare('INSERT INTO leave_requests(request_no,employee_id,leave_type_id,date_from,date_to,days,reason,status,current_step,created_by) VALUES(?,?,?,?,?,?,?,?,1,?)');$st->execute([$no,$employeeId,$typeId,$from,$to,$days,$reason,$status,$uid]);$id=(int)db()->lastInsertId();
+            $st=db()->prepare('INSERT INTO leave_request_approvals(request_id,step_no,approver_type,approver_user_id,status) VALUES(?,1,?,?,"PENDING"),(?,2,"HR_LEAVE",NULL,"PENDING")');$st->execute([$id,$route['type'],$route['user_id'],$id]);db()->commit();
         }catch(Throwable $e){if(db()->inTransaction())db()->rollBack();throw $e;}
-        audit('Leave','SUBMIT_LEAVE','leave_request',$id,['request_no'=>$no,'days'=>$days]);return $id;
+        self::notifyLeaveApprover($employee,['id'=>$id,'request_no'=>$no,'leave_type_name'=>(string)$type['name']],$route['user_id'],1);
+        audit('Leave','SUBMIT_LEAVE','leave_request',$id,['request_no'=>$no,'days'=>$days,'approver_type'=>$route['type']]);return $id;
     }
 
     public static function leaveQueue(string $type): array
     {
         if(!FoundationRepository::tableExists('leave_request_approvals'))return [];$uid=(int)(Auth::user()['id']??0);
-        $sql='SELECT lr.*,lt.name leave_type_name,e.employee_no,e.first_name,e.last_name,b.name branch_name,a.step_no FROM leave_request_approvals a JOIN leave_requests lr ON lr.id=a.request_id JOIN leave_types lt ON lt.id=lr.leave_type_id JOIN employees e ON e.id=lr.employee_id LEFT JOIN branches b ON b.id=e.branch_id WHERE a.approver_type=? AND a.status="PENDING" AND lr.current_step=a.step_no';$params=[$type];if($type==='MANAGER'){$sql.=' AND a.approver_user_id=?';$params[]=$uid;}$sql.=' ORDER BY lr.created_at';$st=db()->prepare($sql);$st->execute($params);return $st->fetchAll();
+        $types=$type==='MANAGER'?['MANAGER','ADL']:[$type];$placeholders=implode(',',array_fill(0,count($types),'?'));
+        $sql='SELECT lr.*,lt.name leave_type_name,e.employee_no,e.first_name,e.last_name,b.name branch_name,a.step_no FROM leave_request_approvals a JOIN leave_requests lr ON lr.id=a.request_id JOIN leave_types lt ON lt.id=lr.leave_type_id JOIN employees e ON e.id=lr.employee_id LEFT JOIN branches b ON b.id=e.branch_id WHERE a.approver_type IN ('.$placeholders.') AND a.status="PENDING" AND lr.current_step=a.step_no';$params=$types;if($type==='MANAGER'){$sql.=' AND a.approver_user_id=?';$params[]=$uid;}$sql.=' ORDER BY lr.created_at';$st=db()->prepare($sql);$st->execute($params);return $st->fetchAll();
     }
 
     /** The final leave queue includes both leave applications and leave correction tickets. */
@@ -486,24 +518,26 @@ final class PayrollRepository
     public static function decideLeave(int $requestId,string $decision,string $remarks=''): void
     {
         $decision=strtoupper(trim($decision));if(!in_array($decision,['APPROVE','REJECT','RETURN'],true))throw new RuntimeException('Invalid decision.');
-        $st=db()->prepare('SELECT lr.*,lt.requires_credit FROM leave_requests lr JOIN leave_types lt ON lt.id=lr.leave_type_id WHERE lr.id=?');$st->execute([$requestId]);$req=$st->fetch();if(!$req)throw new RuntimeException('Leave request not found.');
+        $st=db()->prepare('SELECT lr.*,lt.requires_credit,lt.name leave_type_name FROM leave_requests lr JOIN leave_types lt ON lt.id=lr.leave_type_id WHERE lr.id=?');$st->execute([$requestId]);$req=$st->fetch();if(!$req)throw new RuntimeException('Leave request not found.');
         $step=(int)$req['current_step'];$st=db()->prepare('SELECT * FROM leave_request_approvals WHERE request_id=? AND step_no=? AND status="PENDING"');$st->execute([$requestId,$step]);$a=$st->fetch();if(!$a)throw new RuntimeException('Request is not awaiting approval.');$uid=(int)(Auth::user()['id']??0);$type=(string)$a['approver_type'];
-        if($type==='MANAGER' && (int)$a['approver_user_id']!==$uid)throw new RuntimeException('This leave request is assigned to another manager.');
+        if(in_array($type,['MANAGER','ADL'],true) && (int)$a['approver_user_id']!==$uid)throw new RuntimeException('This leave request is assigned to another Manager/ADL.');
         if($type==='HR_LEAVE' && !Auth::can('leave.approve_hr'))throw new RuntimeException('You do not have HR Leave approval permission.');
+        $notifyHr=false;
         db()->beginTransaction();try{
             $ast=$decision==='APPROVE'?'APPROVED':($decision==='RETURN'?'RETURNED':'REJECTED');$st=db()->prepare('UPDATE leave_request_approvals SET status=?,remarks=?,acted_by=?,acted_at=NOW() WHERE id=?');$st->execute([$ast,$remarks?:null,$uid,$a['id']]);
-            if($decision==='APPROVE' && $type==='MANAGER'){$status='FOR_HR_LEAVE_APPROVAL';$next=2;}
+            if($decision==='APPROVE' && in_array($type,['MANAGER','ADL'],true)){$status='FOR_HR_LEAVE_APPROVAL';$next=2;$notifyHr=true;}
             elseif($decision==='APPROVE' && $type==='HR_LEAVE'){$status='APPROVED';$next=2;if((int)$req['requires_credit']===1)self::applyLeaveCredit((int)$req['employee_id'],(int)$req['leave_type_id'],-(float)$req['days'],'LEAVE_DEDUCTION','leave_request',$requestId,'Approved leave '.$req['request_no'],$uid);}
             elseif($decision==='RETURN'){$status='RETURNED_FOR_REVISION';$next=$step;}else{$status='REJECTED';$next=$step;}
             $st=db()->prepare('UPDATE leave_requests SET status=?,current_step=? WHERE id=?');$st->execute([$status,$next,$requestId]);db()->commit();
         }catch(Throwable $e){if(db()->inTransaction())db()->rollBack();throw $e;}
+        if($notifyHr) self::notifyLeaveHr($req);
         audit('Leave','APPROVAL_'.$decision,'leave_request',$requestId,['step'=>$step,'approver_type'=>$type]);
     }
 
     public static function adjustLeaveCredit(int $employeeId,int $leaveTypeId,float $amount,string $reason): void
     {
         if(!Auth::can('leave.credits.manage'))throw new RuntimeException('You do not have permission to manage leave credits.');
-        if(abs($amount)<0.001)throw new RuntimeException('Adjustment amount cannot be zero.');if(trim($reason)==='')throw new RuntimeException('Adjustment reason is required.');
+        if($amount<0.001)throw new RuntimeException('Adjustment amount must be greater than zero.');if(trim($reason)==='')throw new RuntimeException('Adjustment reason is required.');
         db()->beginTransaction();
         try{self::applyLeaveCredit($employeeId,$leaveTypeId,$amount,'MANUAL_ADJUSTMENT','manual',null,$reason,(int)(Auth::user()['id']??0));db()->commit();}
         catch(Throwable $e){if(db()->inTransaction())db()->rollBack();throw $e;}

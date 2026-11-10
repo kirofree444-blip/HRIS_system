@@ -185,3 +185,9 @@ One-company Timekeep Summary now also copies the template look (Tahoma 8, border
 
 ## Current application checkpoint - 7 November 2026 (Claude): export template layout
 One-company attendance Excel follows John's Timekeep Summary template; "Ocampos" merges the OC-group companies (BR-799). Files: app/PayrollCutoffDocuments.php, app/PayrollModule.php, app/PayrollAttendanceExportViews.php, tests/attendance_export_company_test.php, scripts/check.php, CONSTRAINTS.md. No migration. Local only. Open: Q-exp1, Q-exp2. Template file kept outside the repo (John's Downloads).
+
+## Current application checkpoint - 10 November 2026 (Claude): status check, read-only
+- Latest app patches: 18 entries dated 2026-11-10 in `05-Implementation/Progress.md` (lines ~393-427): leave routing Manager/ADL -> HR + notifications, SIL rename, Sick Leave deactivated, leave date rules, leave credits on 201 File, no negative credit adjustment, reason view dialog, searchable employee combobox, styled payroll confirm modal, dot indicators (dashboard/calendar; sidebar dot reverted), export Remarks blank on okay days, 201 summary/photo panel cleanup, test attendance imports cleared (localhost DB).
+- Check 2026-11-10 ~21:45: `php -l` clean on all changed PHP (only the known duplicate-openssl warning), `node --check payroll.js` OK, `php scripts/check.php task` OK (0 files in scope, no git).
+- Unattributed: `app/PayrollAttendanceService.php` mtime 2026-11-10 09:34, no Progress entry names it. Ask John if he edited it.
+- Session-Log.md had no 11-10 entries until this check. Local only, not deployed, no git.

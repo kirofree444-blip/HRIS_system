@@ -21,7 +21,7 @@ check('view: right column is three cards (oldest, incident, setup)', str_contain
 check('view: pulse draws no bar for a zero stage and has an empty state', str_contains($view, 'No applicants are in the pipeline yet.') && str_contains($view, 'hd-pulse-zero'));
 check('view: old strings other tests rely on are kept', str_contains($view, 'Requests by type') && str_contains($view, 'How long requests have waited') && str_contains($view, 'Latest Incident Feed') && str_contains($view, 'pulse-bars compact') && str_contains($view, 'No requests were filed in this period.') && str_contains($view, 'Nothing is waiting for HR.') && str_contains($view, 'No interviews are scheduled today.'));
 check('view: panel links are text links', substr_count($view, 'class="panel-link hd-link"') >= 4 && !str_contains($view, 'class="panel-link" '));
-check('view: stylesheet version bumped', str_contains($view, 'hr-ops.css?v=20261031-hd2'));
+check('view: stylesheet version bumped', str_contains($view, 'hr-ops.css?v=20261110-kpi-dot'));
 $lines = array_filter(array_map('trim', explode("
 ", $block)), fn($l) => $l !== '' && !str_starts_with($l, '/*'));
 check('css: v2 block exists and every rule is scoped to .hd2', $block !== '' && !array_filter($lines, fn($l) => !str_starts_with($l, '.hd2') && !str_starts_with($l, '@media')));

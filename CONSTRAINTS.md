@@ -30,6 +30,7 @@ Scratch copy for database suites: see the header of `tests/employee_profile_db_t
 | `tests/notification_sidebar_test.php` | passes (3 scenarios) | Sidebar badge mapping that My Profile and the folded sidebar share |
 | `tests/sidebar_fold_test.php` PASS count (pure, no DB) | 16, 0 FAIL | Folded rail contracts: full logo, group-icon flyout, hidden scrollbar, tooltip on hover/focus, a11y labels, asset versions |
 | `tests/hr_dashboard_ui_test.php` PASS count (pure, no DB) | 20, 0 FAIL | HR dashboard v2: .hd2 scope, tiers, segmented period control, tokens only, focus-visible, reduced motion, responsive, shared CSS untouched |
+| `tests/attendance_remarks_test.php` PASS count (pure, no DB) | 5, 0 FAIL | Attendance export Remarks column: a fully complete day is blank, not "Complete" noise; other states/notes still show |
 | `tests/my_team_ui_test.php` PASS count (pure, no DB) | 30, 0 FAIL | My Team UI: .myteam scope, five fields kept, escaped output and dash for blanks, search/Clear/paging contract, distinct empty states, ARIA table for stacked mobile rows, tokens only, 44px targets, focus-visible, shared styles untouched |
 | `tests/employee_profile_db_test.php` PASS count (scratch DB) | 14, 0 FAIL | Own-data-only access, audited reveal, unlinked account |
 | `tests/employee_profile_http_test.php` PASS count (scratch DB) | 55, 0 FAIL | Real login and routes for employee, HR, client, anonymous |

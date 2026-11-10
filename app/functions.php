@@ -45,6 +45,8 @@ function stage_label(string $code): string {
     if($code==='HR_TIMEKEEPING') return 'HR Review';
     if($code==='RETURNED_FOR_REVISION') return 'For Changes';
     if($code==='CLIENT_REVIEW') return 'Hiring Review'; // label only (SPEC-rec-endorse-manager Q4); the stage code is unchanged
+    if($code==='FOR_ADL_APPROVAL') return 'For ADL Approval';
+    if($code==='FOR_HR_LEAVE_APPROVAL') return 'For HR Approval';
     return ucwords(strtolower(str_replace('_',' ', $code)));
 }
 function stage_badge(string $code): string {

@@ -13,7 +13,8 @@
 /* Type colour is a left rail; the title text always carries the meaning. */
 .t-payroll_cutoff{--cal-tone:var(--hris-brand)}.t-pay_date{--cal-tone:var(--hris-success)}.t-holiday{--cal-tone:var(--hris-danger)}
 .t-company_event{--cal-tone:var(--hris-info)}.t-meeting{--cal-tone:var(--hris-muted)}.t-other{--cal-tone:var(--hris-line)}
-.cal-ev{display:block;margin-top:3px;padding:1px 6px;border-radius:6px;border-left:3px solid var(--cal-tone);background:var(--hris-surface-2);font-size:10.5px;font-weight:600;color:var(--hris-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-ev{display:block;margin-top:3px;padding:1px 6px;border-radius:6px;background:var(--hris-surface-2);font-size:10.5px;font-weight:600;color:var(--hris-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-ev::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cal-tone);margin-right:5px;vertical-align:middle}
 .cal-more{display:block;margin-top:2px;font-size:10px;color:var(--hris-muted)}
 .cal-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:460px;overflow-y:auto}
 .cal-item{padding:10px 12px;border:1px solid var(--hris-line);border-left:4px solid var(--cal-tone);border-radius:10px;background:var(--hris-surface);font-size:12px;color:var(--hris-text)}
@@ -38,7 +39,7 @@
 .cal-legend li{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;background:var(--hris-surface);border:1px solid var(--hris-line);font-size:11px;color:var(--hris-text)}
 .cal-legend i{width:8px;height:8px;border-radius:999px;background:var(--cal-tone)}
 .hd-cal :where(a,summary,button,input,select,textarea):focus-visible{outline:2px solid var(--hris-info);outline-offset:2px}
-@media(max-width:620px){.hd-cal .panel-head{flex-wrap:wrap}.hd-cal-grid{border-spacing:2px}.hd-cal-grid td{height:48px;padding:0}.hd-cal-grid th{font-size:10px}.cal-ev{font-size:0;height:6px;padding:0;border-left-width:0;background:var(--cal-tone)}.cal-more{font-size:9px}.cal-form-row{grid-template-columns:1fr}}
+@media(max-width:620px){.hd-cal .panel-head{flex-wrap:wrap}.hd-cal-grid{border-spacing:2px}.hd-cal-grid td{height:48px;padding:0}.hd-cal-grid th{font-size:10px}.cal-ev{font-size:0;height:6px;padding:0;background:var(--cal-tone)}.cal-ev::before{display:none}.cal-more{font-size:9px}.cal-form-row{grid-template-columns:1fr}}
 /* v3 (2026-11-07): full-width grid; each date is a button that opens the day modal. */
 .hd-cal .panel-head{flex-wrap:wrap}
 .cal-daybtn{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;width:100%;height:100%;min-height:102px;padding:6px;border:0;border-radius:10px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;overflow:hidden}

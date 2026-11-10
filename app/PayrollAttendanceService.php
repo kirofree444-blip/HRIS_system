@@ -44,10 +44,10 @@ final class PayrollAttendanceService
         $phpFileBytes=self::iniBytes((string)ini_get('upload_max_filesize'));
         if($phpFileBytes>0) $fileBytes=min($fileBytes,$phpFileBytes);
         $postBytes=self::iniBytes((string)ini_get('post_max_size'));
-        $totalBytes=100*1024*1024;
+        $totalBytes=150*1024*1024;
         if($postBytes>0) $totalBytes=min($totalBytes,max(0,$postBytes-64*1024));
         $fileBytes=min($fileBytes,$totalBytes);
-        return ['files'=>min(10,max(0,(int)ini_get('max_file_uploads'))),'file_bytes'=>$fileBytes,'total_bytes'=>$totalBytes,'post_bytes'=>$postBytes,'enabled'=>filter_var(ini_get('file_uploads'),FILTER_VALIDATE_BOOLEAN) && $fileBytes>0];
+        return ['files'=>min(80,max(0,(int)ini_get('max_file_uploads'))),'file_bytes'=>$fileBytes,'total_bytes'=>$totalBytes,'post_bytes'=>$postBytes,'enabled'=>filter_var(ini_get('file_uploads'),FILTER_VALIDATE_BOOLEAN) && $fileBytes>0];
     }
 
     public static function uploadSizeLabel(int $bytes): string

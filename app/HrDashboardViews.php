@@ -30,7 +30,7 @@ function hr_dashboard_page():void
     $interviews=db()->query('SELECT i.*, CONCAT(ap.first_name," ",ap.last_name) applicant_name,j.title job_title FROM interviews i JOIN applications a ON a.id=i.application_id JOIN applicants ap ON ap.id=a.applicant_id JOIN job_openings j ON j.id=a.job_opening_id WHERE DATE(i.scheduled_at)=CURDATE() ORDER BY i.scheduled_at LIMIT 6')->fetchAll();
     $first=explode(' ',trim((string)(Auth::user()['name']??'HR Team')))[0];
     render_portal_header('hr','hr-dashboard','HR Dashboard');
-    echo '<link rel="stylesheet" href="public/assets/hr-ops.css?v=20261031-hd2"><link rel="stylesheet" href="public/assets/calendar.css?v=20261107-cal6">';
+    echo '<link rel="stylesheet" href="public/assets/hr-ops.css?v=20261110-kpi-dot"><link rel="stylesheet" href="public/assets/calendar.css?v=20261110-ev-dot">';
     ?>
 <div class="hd2">
     <header class="hd-head"><div><div class="eyebrow">Human Resources</div><h1><?=e(hd_greeting().', '.$first.'.')?></h1><p>Workforce, request and recruitment activity that needs your attention.</p></div>

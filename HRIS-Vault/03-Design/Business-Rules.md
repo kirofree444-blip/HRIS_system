@@ -112,6 +112,7 @@ One index of every `BR-###` in the vault. Rules are **defined in the module note
 | BR-410 | Leave with `is_paid = false` records the absence and instructs [[Payroll]] to deduct the equivalent, rather than paying it. | [[Leave-Management]] |
 | BR-411 | A leave type with a gender restriction or an ID requirement is unfileable unless the employee record satisfies it, checked at filing time. | [[Leave-Management]] |
 | BR-412 | An approval decision is valid only if the approver was in the employee's reporting chain, or a valid delegate, as of the filing date. | [[Leave-Management]] |
+| BR-413 | HR's manual Leave Credit Adjustment (`leave.credits.manage`) only adds credit; it can no longer deduct. Enforced client-side (`min=0.25`) and server-side (`PayrollRepository::adjustLeaveCredit` rejects amount ≤ 0), per John 2026-11-10. | [[Leave-Management]] |
 
 ## 500s - Payroll
 

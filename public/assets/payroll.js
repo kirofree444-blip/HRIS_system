@@ -203,10 +203,39 @@ if (window.location.hash) {
   if (target instanceof HTMLDetailsElement) target.open = true;
 }
 
-document.addEventListener('submit', function (event) {
-  const form = event.target;
-  if (form instanceof HTMLFormElement && form.dataset.payrollConfirm && !window.confirm(form.dataset.payrollConfirm)) event.preventDefault();
-});
+(function () {
+  let dialog = null;
+  let pendingForm = null;
+  function ensureDialog() {
+    if (dialog) return dialog;
+    dialog = document.createElement('dialog');
+    dialog.className = 'payroll-confirm-dialog';
+    dialog.innerHTML = '<p data-payroll-confirm-text></p><div class="payroll-confirm-actions">'
+      + '<button type="button" class="btn" data-payroll-confirm-cancel>Cancel</button>'
+      + '<button type="button" class="btn primary" data-payroll-confirm-ok>Confirm</button></div>';
+    document.body.appendChild(dialog);
+    dialog.querySelector('[data-payroll-confirm-cancel]').addEventListener('click', function () { pendingForm = null; dialog.close(); });
+    dialog.addEventListener('cancel', function () { pendingForm = null; });
+    dialog.querySelector('[data-payroll-confirm-ok]').addEventListener('click', function () {
+      const form = pendingForm;
+      pendingForm = null;
+      dialog.close();
+      if (form) { form.dataset.payrollConfirmBypass = '1'; (form.requestSubmit ? form.requestSubmit() : form.submit()); }
+    });
+    return dialog;
+  }
+  document.addEventListener('submit', function (event) {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !form.dataset.payrollConfirm) return;
+    if (form.dataset.payrollConfirmBypass === '1') { delete form.dataset.payrollConfirmBypass; return; }
+    event.preventDefault();
+    const d = ensureDialog();
+    if (!d.showModal) { if (window.confirm(form.dataset.payrollConfirm)) { form.dataset.payrollConfirmBypass = '1'; form.submit(); } return; }
+    d.querySelector('[data-payroll-confirm-text]').textContent = form.dataset.payrollConfirm;
+    pendingForm = form;
+    d.showModal();
+  });
+})();
 
 document.querySelectorAll('form[data-payroll-upload]').forEach(function (form) {
   const input = form.querySelector('input[type="file"]');
@@ -376,4 +405,80 @@ document.querySelectorAll('form[data-attendance-auto-filter]').forEach(function 
   });
   sync();
   if (isTA() && !matches()) load();
+})();
+
+// Replaces a long "Select employee" <select> with a combobox: the search box
+// lives inside the dropdown panel, which always opens directly below the field.
+document.querySelectorAll('select.emp-select').forEach(function (select) {
+  const items = Array.from(select.options).filter(o => o.value).map(o => ({ value: o.value, label: o.textContent }));
+  const placeholder = select.options[0] && !select.options[0].value ? select.options[0].textContent : 'Select employee';
+  const selected = items.find(i => i.value === select.value);
+
+  const combo = document.createElement('div');
+  combo.className = 'emp-combo';
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'emp-combo-input'; input.autocomplete = 'off';
+  input.placeholder = placeholder; input.value = selected ? selected.label : '';
+  if (select.required) input.required = true;
+  const hidden = document.createElement('input');
+  hidden.type = 'hidden'; hidden.name = select.name; hidden.value = selected ? selected.value : '';
+  const panel = document.createElement('div');
+  panel.className = 'emp-combo-panel'; panel.hidden = true;
+
+  function renderPanel(query) {
+    const q = query.trim().toLowerCase();
+    panel.innerHTML = '';
+    const matches = items.filter(i => !q || i.label.toLowerCase().includes(q));
+    if (!matches.length) { const empty = document.createElement('div'); empty.className = 'emp-combo-empty'; empty.textContent = 'No match'; panel.appendChild(empty); return; }
+    matches.forEach(i => {
+      const opt = document.createElement('div');
+      opt.className = 'emp-combo-option'; opt.textContent = i.label; opt.dataset.value = i.value;
+      opt.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        hidden.value = i.value; input.value = i.label; input.setCustomValidity(''); closePanel();
+      });
+      panel.appendChild(opt);
+    });
+  }
+  function openPanel() { renderPanel(input.value === (selected ? selected.label : '') ? '' : input.value); panel.hidden = false; }
+  function closePanel() { panel.hidden = true; }
+
+  input.addEventListener('focus', openPanel);
+  input.addEventListener('input', function () {
+    hidden.value = '';
+    renderPanel(input.value);
+    panel.hidden = false;
+  });
+  input.addEventListener('blur', function () {
+    setTimeout(function () {
+      if (!hidden.value) input.value = '';
+      closePanel();
+    }, 150);
+  });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+  input.addEventListener('invalid', function () { if (!hidden.value) input.setCustomValidity('Select an employee from the list'); });
+
+  combo.appendChild(input); combo.appendChild(hidden); combo.appendChild(panel);
+  select.parentNode.replaceChild(combo, select);
+});
+
+// Opens the full reason text in a dialog for any [data-view-reason] button.
+(function () {
+  let dialog = null;
+  function getDialog() {
+    if (dialog) return dialog;
+    dialog = document.createElement('dialog');
+    dialog.className = 'reason-view-dialog';
+    dialog.innerHTML = '<h3>Reason</h3><p data-reason-text></p><div class="reason-view-actions"><button type="button" class="btn primary" data-reason-close>Close</button></div>';
+    document.body.appendChild(dialog);
+    dialog.querySelector('[data-reason-close]').addEventListener('click', () => dialog.close());
+    return dialog;
+  }
+  document.addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-view-reason]');
+    if (!btn) return;
+    const d = getDialog();
+    d.querySelector('[data-reason-text]').textContent = btn.dataset.viewReason;
+    d.showModal();
+  });
 })();

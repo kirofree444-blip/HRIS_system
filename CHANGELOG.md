@@ -1,3 +1,36 @@
+## 2026-11-10 - Sidebar active item: dot removed (local)
+- Reverted the dot added to the active sidebar item in the previous patch; it now has no left-edge marker at all, just the highlighted background.
+
+## 2026-11-10 - Attendance export Remarks no longer says "Complete" (local)
+- A fully complete attendance day's Remarks cell is blank now instead of showing "Complete"; days with a real note (TA/OB approval, missing punch, ticket number) show just that note, no more redundant "Complete /" prefix. Applies to both Excel exports and the PDF.
+
+## 2026-11-10 - Sidebar active item uses a dot, not a bar (local)
+- The orange left bar on the active sidebar link (e.g. Dashboard) is now a small dot at the left edge, same color, same pattern as the dashboard and calendar changes.
+
+## 2026-11-10 - Calendar event chips use a dot, not a bar (local)
+- The colored left-edge bar on calendar day chips (Cutoff starts/ends, Pay date) is now a small dot next to the label, same colors, matching the dashboard KPI card change.
+
+## 2026-11-10 - HR Dashboard: Needs action cards use a dot, not a bar (local)
+- The colored left-edge bar on Pending requests / In progress / Incident Reports is now a small dot next to the label instead, same colors.
+
+## 2026-11-10 - Employee 201 File: removed the redundant summary panel (local)
+- The "201 File summary" tile row (Government IDs / Emergency contacts / Documents / History events) is gone from the Overview tab -- it just duplicated the tab bar above it.
+
+## 2026-11-10 - Employee 201 File: photo upload moved to the avatar (local)
+- Removed the separate "Profile photo" panel from the Overview tab; uploading a new photo is now a small pencil button on the header avatar itself, and picking a file saves it right away.
+
+## 2026-11-10 - Employee 201 File shows leave credits to HR (local)
+- The Overview tab of an employee's 201 File now has a "Leave credits" panel so HR can see remaining balance per leave type without leaving the profile, with a quick link to adjust credits if they have permission.
+
+## 2026-11-10 - Manager Team Approvals: leave reason now in a view dialog (local)
+- The Leave card on Team Approvals (manager/ADL) shows an eye-icon button next to Approve/Reject when a reason is filed; clicking it opens a bigger popup with the full reason text, instead of cramming it into the row.
+
+## 2026-11-10 - Leave Credit Adjustment no longer accepts negative amounts (local)
+- The manual Leave Credit Adjustment form (HR Leave Approvals) only adds credit now; negative/deduction is blocked both in the form (`min=0.25`) and on the server (`PayrollRepository::adjustLeaveCredit`).
+
+## 2026-11-10 - Employee dropdowns are now a searchable combobox (local)
+- The long "Select employee" dropdowns (HR Leave credit adjustment, Payroll biometric ID matching x2, salary rates) are now a real combobox: the search box is inside the dropdown, and the match list always opens directly below the field. Same `select.emp-select` + `payroll.js` widget reused on all four; posts the same `employee_id` field, no DB/permission changes.
+
 ## 2026-11-07 - Company export: billing sheets (local)
 - The one-company Excel now also has Billing Sheet, Sales Seg, Summary Sheet, CI (charge invoice) and Billing B, built like the payroll template and computed in Excel from the Payroll Summary. The Summary Sheet lists the days each employee is missing a punch.
 - The separate SSS Table sheet is gone; the SSS deduction still uses the same brackets.
@@ -679,3 +712,24 @@ Proposed tracking-access -> offer-response per John's clarification: acceptance 
 
 ## 2026-11-05 - Pipeline "No site" tab (Claude)
 Pipeline now has a third tab, No site, for candidates on jobs with site Other/blank (shown when any exist), so every active applicant is on a board. Replaces the unassigned notice. Files: index.php hr-pipeline, public/assets/app.css (.pv-tab link, .pv-un removed), app/View.php css v7. No migration/data change.
+
+## 2026-11-10 - Payroll Ticket Review confirm modal (Claude)
+Replaced the native OS confirm() popup ("Verify this request and send it to <Manager>?") with an in-page styled modal, same visual language as the HR Request Queue dialogs. Applies to every payroll confirm prompt (coverage confirmations, cutoff generation, mark-as-paid, HR verify & send, return to employee). No data/schema change.
+
+## 2026-11-10 - Test attendance imports cleared
+All 8 test biometric import batches (and their derived punches/DTR for cutoffs Sept 19 - Nov 3, 2026) were deleted from localhost after a verified backup. Import History page is now empty, ready for real imports.
+
+## 2026-11-10 - Employee dashboard leave tile (Claude)
+Home dashboard Leave balance box now shows Vacation Leave only (Sick Leave removed from this preview card; still available on the full Leave screen). Single-card layout no longer leaves an empty grid cell.
+
+## 2026-11-10 - Leave routes to immediate supervisor (Manager/ADL) then HR (Claude)
+Filing a leave now notifies and routes to the employee's immediate supervisor first -- Manager for a Head Office employee, ADL for a branch employee, matching how Payroll Concern already routes -- and only reaches HR after that approval. Bell notifications added at both steps (none existed before). Branch employees without a configured Manager-role approver can now be approved by their ADL instead of being stuck.
+
+## 2026-11-10 - Vacation Leave renamed to Service Incentive Leave (SIL)
+The leave type shown as "Vacation Leave" in filing and on the dashboard is now labeled "Service Incentive Leave (SIL)". Label change only; no behavior/rule change.
+
+## 2026-11-10 - Sick Leave deactivated
+Sick Leave is no longer offered when filing a leave or shown in leave balances (deactivated, not deleted -- reversible).
+
+## 2026-11-10 - Leave date rules: SIL is single-day, no backdating except Unpaid Leave
+Applying for Service Incentive Leave (SIL) now shows only a From date (always one day). Every other leave type keeps From/To but cannot be set in the past -- Unpaid Leave is the only type that still allows a backdated filing.

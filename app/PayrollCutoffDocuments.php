@@ -74,7 +74,8 @@ final class PayrollCutoffDocuments
 
     private static function notes(array $day): string
     {
-        $notes=[$day['export_day_label']??self::stateLabel($day['state'])];
+        $label=$day['export_day_label']??self::stateLabel($day['state']);
+        $notes=$label==='Complete'?[]:[$label];
         if(!empty($day['export_missing']))$notes[]='Missing: '.implode(', ',$day['export_missing']);
         foreach($day['export_review_notes']??[] as $note)$notes[]=$note;
         foreach(array_unique(array_values($day['export_marks']??[])) as $type)$notes[]=$type.' approved';
@@ -652,7 +653,7 @@ final class PayrollCutoffDocuments
                     $pdf->line(36,$y+7,559,$y+7);$y+=20;
                 }
                 $note=self::notes($day);
-                if($note!=='Complete')foreach($pdf->wrap($note,100) as $line){if($y>767)$header();$pdf->text(42,$y,$line,8,false,511);$y+=13;}
+                if($note!=='')foreach($pdf->wrap($note,100) as $line){if($y>767)$header();$pdf->text(42,$y,$line,8,false,511);$y+=13;}
             }
         }
         $pdf->save($file);
